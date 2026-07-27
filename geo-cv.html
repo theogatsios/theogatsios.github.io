@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Theo Gatsios — Geospatial CV</title>
+
+<!-- MapLibre GL JS 4.7.1 (UMD build → global `maplibregl`; 5.x is ESM-only) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css" crossorigin="anonymous" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --ink:#0a0f16;
+    --panel:#0e151f;
+    --panel-2:#121b27;
+    --line:#1f2c3c;
+    --text:#cdd6e3;
+    --text-dim:#7d8ca1;
+    --gold:#e8b15e;
+    --gold-soft:#caa35a;
+    --cyan:#5fd0d8;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--ink);color:var(--text);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;font-weight:300;-webkit-font-smoothing:antialiased;}
+  a{color:var(--cyan);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s}
+  a:hover{border-color:var(--cyan)}
+
+  /* ---------- LAYOUT ---------- */
+  .stage{display:grid;grid-template-columns:42% 58%;min-height:100vh}
+  .narrative{position:relative;z-index:2;padding:0 clamp(20px,3.5vw,64px)}
+  .mapwrap{position:sticky;top:0;height:100vh;align-self:start;z-index:1}
+  #map{width:100%;height:100%;background:#070b10}
+
+  /* ---------- HUD + RAIL ---------- */
+  .hud{position:absolute;left:18px;bottom:26px;z-index:5;
+    font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--text-dim);
+    background:rgba(10,15,22,.62);backdrop-filter:blur(6px);
+    border:1px solid var(--line);border-radius:6px;padding:9px 12px;letter-spacing:.02em;
+    line-height:1.6;pointer-events:none}
+  .hud b{color:var(--gold);font-weight:500}
+  .hud .crs{color:#566374}
+  .rail{position:fixed;top:0;left:0;height:3px;width:0;z-index:1000;
+    background:linear-gradient(90deg,var(--gold),var(--cyan));transition:width .25s ease}
+
+  /* ---------- MARKERS ---------- */
+  .pin-hit{width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .pin{position:relative;width:14px;height:14px}
+  .pin i{position:absolute;inset:0;border-radius:50%;background:var(--gold);
+    box-shadow:0 0 0 1.5px rgba(16,24,36,.85),0 1px 5px rgba(0,0,0,.4);transition:transform .35s ease}
+  .pin-hit:hover .pin i{transform:scale(1.2)}
+  .pin.active i{transform:scale(1.45);background:#f2bd62;
+    box-shadow:0 0 0 1.5px rgba(16,24,36,.9),0 0 16px 4px rgba(232,177,94,.55)}
+  .pin .ring{position:absolute;inset:-6px;border-radius:50%;border:1px solid var(--gold);opacity:0}
+  .pin.active .ring{animation:pulse 2.4s ease-out infinite}
+  @keyframes pulse{0%{transform:scale(.6);opacity:.7}100%{transform:scale(2.4);opacity:0}}
+
+  /* ---------- POPUP (themed) ---------- */
+  .maplibregl-popup{max-width:280px!important}
+  .maplibregl-popup-content{
+    background:var(--panel-2)!important;color:var(--text)!important;
+    border:1px solid var(--line);border-radius:10px;padding:16px 18px 15px!important;
+    box-shadow:0 18px 40px -16px rgba(0,0,0,.85);font-family:"IBM Plex Sans",sans-serif}
+  .maplibregl-popup-close-button{color:var(--text-dim)!important;font-size:18px;
+    width:26px;height:26px;right:3px;top:2px}
+  .maplibregl-popup-close-button:hover{color:var(--gold)!important;background:transparent!important}
+  /* tip colour for every anchor so the arrow matches the card */
+  .maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+  .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+  .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip{border-top-color:var(--panel-2)!important}
+  .maplibregl-popup-anchor-top .maplibregl-popup-tip,
+  .maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+  .maplibregl-popup-anchor-top-right .maplibregl-popup-tip{border-bottom-color:var(--panel-2)!important}
+  .maplibregl-popup-anchor-left .maplibregl-popup-tip{border-right-color:var(--panel-2)!important}
+  .maplibregl-popup-anchor-right .maplibregl-popup-tip{border-left-color:var(--panel-2)!important}
+  .pc-eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--gold-soft);margin:0 0 6px}
+  .pc h4{font-family:"Fraunces",serif;font-weight:600;font-size:18px;line-height:1.12;
+    margin:0 0 7px;color:#eef2f8}
+  .pc p{font-size:13px;line-height:1.5;color:var(--text-dim);margin:0}
+  .pc .pc-meta{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#566374;margin-top:9px}
+
+  /* nav control tint */
+  .maplibregl-ctrl-group{background:var(--panel-2)!important;border:1px solid var(--line)!important}
+  .maplibregl-ctrl-group button{filter:invert(.85) hue-rotate(180deg)}
+  .maplibregl-ctrl-attrib{background:rgba(10,15,22,.7)!important}
+  .maplibregl-ctrl-attrib a{color:#7d8ca1!important}
+
+  /* ---------- NARRATIVE ---------- */
+  .intro{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:80px 0}
+  .kicker{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.32em;
+    text-transform:uppercase;color:var(--gold-soft);margin:0 0 18px}
+  .intro h1{font-family:"Fraunces",serif;font-weight:900;font-size:clamp(40px,5.2vw,76px);
+    line-height:.98;margin:0 0 10px;color:#f3f6fb;letter-spacing:-.01em}
+  .intro h1 .em{font-style:italic;font-weight:400;color:var(--gold)}
+  .intro .role{font-size:clamp(16px,1.5vw,20px);color:var(--text-dim);margin:0 0 28px;font-weight:300}
+  .scrollcue{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.18em;
+    color:var(--text-dim);text-transform:uppercase;display:flex;align-items:center;gap:10px}
+  .scrollcue:after{content:"";width:1px;height:34px;background:linear-gradient(var(--gold),transparent);
+    display:inline-block;animation:drop 1.8s ease-in-out infinite}
+  @keyframes drop{0%,100%{opacity:.3;transform:translateY(-4px)}50%{opacity:1;transform:translateY(4px)}}
+
+  .chapter{min-height:88vh;display:flex;flex-direction:column;justify-content:center;padding:60px 0;border-top:1px solid var(--line)}
+  .chapter .tag{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--gold-soft);display:flex;gap:14px;align-items:baseline;margin:0 0 14px}
+  .chapter .tag .num{color:#42526a}
+  .chapter h2{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(26px,3vw,40px);
+    line-height:1.04;margin:0 0 18px;color:#eef2f8;letter-spacing:-.01em}
+  .chapter p{font-size:16px;line-height:1.72;color:var(--text);max-width:34em;margin:0 0 14px;font-weight:300}
+  .chapter .meta{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--text-dim);margin-top:6px;letter-spacing:.02em}
+  .chapter .meta b{color:var(--gold-soft);font-weight:500}
+  .hint{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#566374;margin-top:4px}
+  .stack{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;max-width:34em}
+  .stack span{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--text);
+    border:1px solid var(--line);background:var(--panel-2);border-radius:5px;padding:5px 10px}
+  .edit{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:#5a6a7d;
+    border:1px dashed #2a384a;border-radius:4px;padding:2px 7px;margin-top:14px}
+  .contact{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:18px;font-family:"IBM Plex Mono",monospace;font-size:13px}
+  .contact span{color:var(--text-dim)}
+  footer{padding:50px 0 70px;border-top:1px solid var(--line);font-family:"IBM Plex Mono",monospace;
+    font-size:11px;color:#42526a;letter-spacing:.04em}
+
+  .chapter,.intro>*{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
+  .chapter.seen,.intro.go>*{opacity:1;transform:none}
+  .intro>*:nth-child(2){transition-delay:.08s}.intro>*:nth-child(3){transition-delay:.16s}.intro>*:nth-child(4){transition-delay:.24s}
+
+  @media (max-width:900px){
+    .stage{grid-template-columns:1fr}
+    .mapwrap{order:-1;position:sticky;top:0;height:44vh;z-index:3;box-shadow:0 14px 30px -16px rgba(0,0,0,.8)}
+    .narrative{padding:0 22px}
+    .intro{min-height:auto;padding:48px 0 30px}
+    .chapter{min-height:auto;padding:42px 0}
+    .hud{font-size:10px;left:12px;bottom:12px}
+  }
+</style>
+</head>
+<body>
+<div class="rail" id="rail"></div>
+
+<div class="stage">
+  <div class="narrative" id="narrative"></div>
+  <div class="mapwrap">
+    <div id="map"></div>
+    <div class="hud" id="hud">
+      <div><b id="hud-name">GREECE</b></div>
+      <div id="hud-coords">38.6000° N&nbsp;&nbsp;23.8000° E</div>
+      <div class="crs">WGS84 / basemap EPSG:3857 · native EPSG:2100</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js" crossorigin="anonymous"></script>
+<script>
+/* =========================================================================
+   EDIT YOUR STORY HERE.  coords are [lat, lng] (human order) — converted
+   to MapLibre's [lng, lat] internally, so just edit naturally.
+   marker:true  -> drops a clickable gold pin that opens a popup.
+   pop          -> short text shown inside the popup (falls back to nothing).
+   ========================================================================= */
+const STORY = [
+  { type:"intro", label:"Geospatial CV",
+    h1:'Theo <span class="em">Gatsios</span>',
+    role:"GIS &amp; Remote Sensing Engineer — Athens, Greece",
+    coords:[38.6,23.8], zoom:5.4, name:"GREECE" },
+
+  { tag:"Based in", name:"PALAIO FALIRO", title:"Athens, on the Saronic Gulf",
+    coords:[37.953034,23.704705], zoom:11.5, marker:true,
+    body:`Home base on the Athens coast. Everything here is editable — swap text,
+          coordinates and zoom in the <code>STORY</code> array at the top of this file.`,
+    meta:`<b>37.953° N, 23.800° E</b> · native grid EPSG:2100 (EGSA87)`,
+    pop:`Home base on the Athens coast — and the centre of the EGSA87 world.` },
+
+  { tag:"Education · I", name:"BSc GEOLOGY", title:"BSc in Geology",
+    coords:[38.2919714,21.7897984], zoom:13.5, marker:true,
+    body:`Foundations in earth processes, structural geology and field mapping.`,
+    meta:`<b><a href=https://geology.upatras.gr>University of Patras</a></b>`,
+    note:"↳ set the real institution + coordinates",
+    pop:`Earth processes, structural geology and field mapping.` },
+
+  { tag:"Education · II", name:"MSc GEOPHYSICS", title:"MSc in Geophysics",
+    coords:[37.9666322,23.7846110], zoom:12.5, marker:true,
+    body:`Specialisation in geophysical methods and signal interpretation —
+          the bridge into remote sensing.`,
+    meta:`<b>[ Your university — edit ]</b>`,
+    note:"↳ placeholder set to Thessaloniki; change to yours",
+    pop:`Geophysical methods and signal interpretation — the bridge into remote sensing.` },
+
+  { tag:"Research · 5 yrs", name:"MT-InSAR", title:"Remote Sensing &amp; Multi-Temporal InSAR",
+    coords:[36.404,25.430], zoom:10.5, marker:true,
+    body:`Five years measuring millimetre-scale ground deformation from satellite
+          radar — persistent &amp; distributed scatterer interferometry over volcanic,
+          tectonic and subsidence-prone terrain.`,
+    meta:`<b>Example study area — Santorini</b> · edit to your real AOI`,
+    pop:`mm-scale ground deformation from satellite radar (PS/DS InSAR).` },
+
+  { tag:"Now", name:"GET — ATHENS", title:"GIS &amp; Remote Sensing Engineer at GET",
+    coords:[37.9446111,23.6791036], zoom:12.5, marker:true,
+    body:`At Geospatial Enabling Technologies, building spatial data infrastructure
+          and the tooling around it — and currently learning photogrammetry.
+          <a href="https://www.getmap.eu" target="_blank" rel="noopener">getmap.gr</a>`,
+    meta:`<b>Athens</b> · set GET's exact location if you like`,
+    pop:`Building spatial data infrastructure & internal tooling. Now learning photogrammetry.` },
+
+  { tag:"Toolbox", name:"THE STACK", title:"How the work gets built",
+    coords:[37.985,23.730], zoom:10.5,
+    body:`A self-hosted, open-source geospatial pipeline — from the database to the
+          field app to the desktop tools I write.`,
+    stack:["PostGIS","GeoServer","GeoNetwork","QGIS","QFieldCloud","Python","PyQt6","Docker","SQL"] },
+
+  { tag:"Beyond work", name:"HELMOS", title:"Astronomy, astrophotography &amp; the deep blue",
+    coords:[37.985,22.203], zoom:9.5, marker:true,
+    body:`Off the clock I chase dark skies and star trails (see my
+          <a href="https://github.com/theogatsios" target="_blank" rel="noopener">astrotrails</a>
+          generator), and dive the Aegean. Pin parked near Mt. Helmos — high, dark and clear.`,
+    meta:`<b>Dark-sky site</b> · swap for your favourite spot`,
+    pop:`Dark skies, star trails and Aegean dives.` },
+
+  { tag:"Get in touch", name:"CONTACT", title:"Let's map something",
+    coords:[37.928,23.700], zoom:8.5,
+    body:`Open to collaboration on spatial data, remote sensing and open-source GIS tooling.`,
+    contact:[
+      ['mail','<a href="mailto:theogat@protonmail.com">theogat@protonmail.com</a>'],
+      ['git','<a href="https://github.com/theogatsios" target="_blank" rel="noopener">github.com/theogatsios</a>'],
+      ['web','<a href="https://theogat.com" target="_blank" rel="noopener">theogat.com</a>']
+    ] }
+];
+
+const LL = c => [c[1], c[0]];   // [lat,lng] -> [lng,lat] for MapLibre
+
+/* ---------- BASEMAP -----------------------------------------------------
+   OpenFreeMap "Positron" — light vector basemap (free, no API key).
+   Vector tiles are tiny and zoom continuously, so camera flights stay smooth
+   with none of the raster tile pop-in you get from satellite imagery.
+   Label layers are stripped on load (see map "load" handler) to keep the
+   clean, pin-only look. Swap this URL for any other style to change basemap.
+   ------------------------------------------------------------------------ */
+const basemapStyle = "https://tiles.openfreemap.org/styles/positron";
+
+const map = new maplibregl.Map({
+  container:"map", style:basemapStyle,
+  center:LL(STORY[0].coords), zoom:STORY[0].zoom,
+  attributionControl:{compact:true},
+  fadeDuration:0                    // snap tiles in instantly, no cross-fade lag
+});
+map.addControl(new maplibregl.NavigationControl({showCompass:false}), "bottom-right");
+map.scrollZoom.enable();           // cursor over map → wheel zooms (and won't scroll the page)
+map.dragRotate.disable();
+map.touchZoomRotate.disableRotation();
+map.on("load", ()=>{
+  // remove every text/label layer so only the pins carry context
+  map.getStyle().layers.forEach(l=>{ if(l.type==="symbol") map.removeLayer(l.id); });
+  map.resize();
+});
+
+/* ---------- build narrative + markers ---------- */
+const narrative = document.getElementById("narrative");
+const pins = {};
+
+function popupHTML(s){
+  return `<div class="pc">
+    <p class="pc-eyebrow">${s.tag||""}</p>
+    <h4>${s.title}</h4>
+    ${s.pop?`<p>${s.pop}</p>`:""}
+    ${s.meta?`<p class="pc-meta">${s.meta.replace(/<\/?b>/g,"")}</p>`:""}
+  </div>`;
+}
+
+STORY.forEach((s,i)=>{
+  if(s.type==="intro"){
+    const el=document.createElement("section");
+    el.className="intro"; el.dataset.idx=i;
+    el.innerHTML=`<p class="kicker">${s.label}</p><h1>${s.h1}</h1>
+      <p class="role">${s.role}</p><p class="scrollcue">Scroll to explore</p>`;
+    narrative.appendChild(el); return;
+  }
+  const el=document.createElement("section");
+  el.className="chapter"; el.dataset.idx=i;
+  let html=`<p class="tag"><span class="num">0${i}</span> ${s.tag}</p><h2>${s.title}</h2>`;
+  if(s.body)    html+=`<p>${s.body}</p>`;
+  if(s.stack)   html+=`<div class="stack">${s.stack.map(t=>`<span>${t}</span>`).join("")}</div>`;
+  if(s.contact) html+=`<div class="contact">${s.contact.map(c=>`<span>${c[0]} ▸</span> ${c[1]}`).join("")}</div>`;
+  if(s.meta)    html+=`<p class="meta">${s.meta}</p>`;
+  if(s.marker)  html+=`<p class="hint">▸ click the pin on the map for a popup</p>`;
+  if(s.note)    html+=`<span class="edit">${s.note}</span>`;
+  el.innerHTML=html;
+  narrative.appendChild(el);
+
+  if(s.marker){
+    const hit=document.createElement("div");
+    hit.className="pin-hit";
+    hit.innerHTML=`<div class="pin" id="pin-${i}"><span class="ring"></span><i></i></div>`;
+    const popup=new maplibregl.Popup({offset:18, closeButton:true, maxWidth:"280px"}).setHTML(popupHTML(s));
+    new maplibregl.Marker({element:hit, anchor:"center"})
+      .setLngLat(LL(s.coords)).setPopup(popup).addTo(map);
+    pins[i]=document.getElementById(`pin-${i}`);
+  }
+});
+
+const foot=document.createElement("footer");
+foot.innerHTML="Built with MapLibre GL JS + open data · self-hostable static file · replaces the deprecated ArcGIS MapJournal";
+narrative.appendChild(foot);
+
+/* ---------- scroll → camera ---------- */
+const hudName=document.getElementById("hud-name");
+const hudCoords=document.getElementById("hud-coords");
+const rail=document.getElementById("rail");
+let current=-1;
+
+function activate(idx){
+  if(idx===current) return;
+  current=idx;
+  const s=STORY[idx];
+  map.flyTo({center:LL(s.coords), zoom:s.zoom, duration:1500, curve:1.42, essential:true});
+  hudName.textContent=s.name||"";
+  hudCoords.innerHTML=`${s.coords[0].toFixed(4)}° N&nbsp;&nbsp;${s.coords[1].toFixed(4)}° E`;
+  Object.entries(pins).forEach(([k,el])=>el.classList.toggle("active", +k===idx));
+}
+
+const io=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add("seen");
+      if(e.target.classList.contains("intro")) e.target.classList.add("go");
+      activate(+e.target.dataset.idx);
+    }
+  });
+},{rootMargin:"-45% 0px -45% 0px", threshold:0});
+document.querySelectorAll("[data-idx]").forEach(s=>io.observe(s));
+
+addEventListener("scroll",()=>{
+  const h=document.documentElement;
+  rail.style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+"%";
+},{passive:true});
+addEventListener("resize",()=>map.resize());
+
+document.querySelector(".intro").classList.add("go","seen");
+</script>
+</body>
+</html>
