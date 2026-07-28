@@ -113,6 +113,56 @@
   .chapter .meta{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--text-dim);margin-top:6px;letter-spacing:.02em}
   .chapter .meta b{color:var(--gold-soft);font-weight:500}
   .hint{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#566374;margin-top:4px}
+
+  /* ---------- EXPANDABLE DETAIL (thesis / projects / key-value rows) ---------- */
+  .more{margin-top:20px;max-width:34em}
+  .more-btn{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--gold-soft);background:transparent;
+    border:1px solid var(--line);border-radius:5px;padding:7px 13px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:10px;transition:border-color .2s,color .2s}
+  .more-btn:hover{border-color:var(--gold-soft);color:var(--gold)}
+  .more-btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  .more-btn .chev{font-size:8px;color:#5a6a7d;transition:transform .3s ease}
+  .more-btn[aria-expanded="true"] .chev{transform:rotate(90deg);color:var(--gold)}
+  /* 0fr -> 1fr animates the panel open without hard-coding a height */
+  .more-panel{display:grid;grid-template-rows:0fr;opacity:0;
+    transition:grid-template-rows .42s ease,opacity .3s ease}
+  .more-panel>.more-inner{overflow:hidden}
+  .more-panel.open{grid-template-rows:1fr;opacity:1}
+  .more-inner>*:first-child{margin-top:20px}
+
+  /* NOTE: `.chapter p` is (0,1,1) and would beat a bare `.pbody` class, so every
+     paragraph rule below is scoped to .more-inner to raise it to (0,2,0). */
+  .dblock+.dblock{margin-top:24px}
+  .more-inner .dlabel{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--gold-soft);margin:0 0 11px;max-width:none}
+  .more-inner .dtitle{font-family:"Fraunces",serif;font-weight:600;font-size:17px;line-height:1.25;
+    color:#eef2f8;margin:0 0 6px}
+  .more-inner .dbody{font-size:14.5px;line-height:1.65;color:var(--text-dim);margin:0}
+
+  .plist{list-style:none;margin:0;padding:0}
+  .plist li{position:relative;padding-left:17px;border-left:1px solid var(--line);padding-bottom:17px}
+  .plist li:last-child{padding-bottom:0;border-left-color:transparent}
+  .plist li:before{content:"";position:absolute;left:-3px;top:7px;width:5px;height:5px;
+    border-radius:50%;background:var(--gold-soft)}
+  .more-inner .pname{font-size:15px;color:#e6ecf5;margin:0 0 4px;font-weight:400;line-height:1.35}
+  .more-inner .pname a{color:#e6ecf5}
+  .more-inner .pname a:hover{color:var(--cyan);border-color:var(--cyan)}
+  .pwhen{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:#566374;
+    margin-left:10px;letter-spacing:.06em}
+  .more-inner .pbody{font-size:13.5px;line-height:1.62;color:var(--text-dim);margin:0}
+
+  .drows{margin:0;display:grid;grid-template-columns:minmax(84px,auto) 1fr;gap:9px 20px}
+  .drows dt{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:#5a6a7d;padding-top:3px}
+  .drows dd{margin:0;font-size:14px;line-height:1.6;color:var(--text)}
+  @media (max-width:900px){
+    .drows{grid-template-columns:1fr;gap:3px 0}
+    .drows dd{margin-bottom:11px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .more-panel,.more-btn .chev{transition:none}
+  }
   .stack{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;max-width:34em}
   .stack span{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--text);
     border:1px solid var(--line);background:var(--panel-2);border-radius:5px;padding:5px 10px}
@@ -159,6 +209,13 @@
    to MapLibre's [lng, lat] internally, so just edit naturally.
    marker:true  -> drops a clickable gold pin that opens a popup.
    pop          -> short text shown inside the popup (falls back to nothing).
+
+   EXPANDABLE PANEL — any of these three keys adds a toggle under the chapter.
+   Omit them all and no toggle appears.
+     thesis   -> {title, body?, link?}
+     projects -> [{name, body?, when?, link?}, ...]
+     details  -> [["Label","value (HTML allowed)"], ...]
+     moreLabel / projectsLabel -> override the button / list headings.
    ========================================================================= */
 const STORY = [
   { type:"intro", label:"Geospatial CV",
@@ -176,48 +233,118 @@ const STORY = [
   { tag:"Education · I", name:"BSc GEOLOGY", title:"BSc in Geology",
     coords:[38.2919714,21.7897984], zoom:13.5, marker:true,
     body:`Foundations in earth processes, structural geology and field mapping.`,
-    meta:`<b><a href=https://geology.upatras.gr/en/ target="_blank">University of Patras</a></b>`,
-    note:"↳ set the real institution + coordinates",
-    pop:`Earth processes, structural geology and field mapping.` },
+    meta:`<b><a href="https://geology.upatras.gr/en/" target="_blank" rel="noopener">University of Patras</a></b>`,
+    pop:`Earth processes, structural geology and field mapping.`,
+    details:[
+      ["Coursework","Structural geology · mineralogy & petrology · stratigraphy · hydrogeology · engineering geology"],
+      ["Field work","Geological mapping campaigns across the Peloponnese and western Greece"],
+      ["Carried over","Reading terrain before reading pixels — the habit that still shapes how I approach remote sensing."]
+    ] },
 
   { tag:"Education · II", name:"MSc GEOPHYSICS", title:"MSc in Geophysics",
     coords:[37.9666322,23.7846110], zoom:12.5, marker:true,
     body:`Specialisation in geophysical methods and signal interpretation —
           the bridge into remote sensing.`,
-    meta:`<b><a href=https://en.geol.uoa.gr/ target="_blank">National and Kapodistrian University of Athens</a></b>`,
-    note:"↳ placeholder set to Thessaloniki; change to yours",
-    marker: "Thesis: MultiTemporal SAR Interferometry on Argos basin",
-    pop:`Geophysical methods and signal interpretation — the bridge into remote sensing.` },
+    meta:`<b><a href="https://en.geol.uoa.gr/" target="_blank" rel="noopener">National and Kapodistrian University of Athens</a></b>`,
+    pop:`Geophysical methods and signal interpretation — the bridge into remote sensing.`,
+    thesis:{
+      title:"Multi-Temporal SAR Interferometry on the Argos basin",
+      body:`Ground-deformation time series built from stacked Sentinel-1 acquisitions,
+            used to characterise subsidence patterns across the basin.` },
+    details:[
+      ["Methods","Seismology · potential fields · signal processing · inverse problems"],
+      ["Tools","MATLAB · Python · GMT"]
+    ] },
 
   { tag:"Research · 5 yrs", name:"MT-InSAR", title:"Remote Sensing &amp; Multi-Temporal InSAR",
     coords:[36.404,25.430], zoom:10.5, marker:true,
     body:`Five years measuring millimetre-scale ground deformation from satellite
           radar — persistent &amp; distributed scatterer interferometry over volcanic,
           tectonic and subsidence-prone terrain.`,
-    meta:`<b>Example study area — Santorini</b> · edit to your real AOI`,
-    pop:`mm-scale ground deformation from satellite radar (PS/DS InSAR).` },
+    meta:`<b>Study area shown — Santorini</b>`,
+    pop:`mm-scale ground deformation from satellite radar (PS/DS InSAR).`,
+    details:[
+      ["Techniques","Persistent & distributed scatterer InSAR · SBAS · atmospheric phase screen removal · time-series inversion"],
+      ["Software","GAMMA · ISCE2 / topsStack · MintPy · SNAP"],
+      ["Sensors","Sentinel-1 (C-band) · ALOS-2 (L-band)"]
+    ],
+    projects:[
+      { name:"La Palma pre-eruption deformation", when:"2021",
+        body:`SBAS processing of the months preceding the Cumbre Vieja eruption —
+              stack design, coherence screening and displacement time series.` },
+      { name:"precise-mtinsar",
+        body:`A parallelised, GPU-aware Python package for multi-temporal InSAR
+              processing, shipped with a synthetic demo dataset.` }
+    ] },
 
   { tag:"Now", name:"GET — ATHENS", title:"GIS &amp; Remote Sensing Engineer at GET",
     coords:[37.9446111,23.6791036], zoom:12.5, marker:true,
     body:`At Geospatial Enabling Technologies, building spatial data infrastructure
           and the tooling around it — and currently learning photogrammetry.
           <a href="https://www.getmap.eu" target="_blank" rel="noopener">getmap.gr</a>`,
-    meta:`<b>Athens</b> · set GET's exact location if you like`,
-    pop:`Building spatial data infrastructure & internal tooling. Now learning photogrammetry.` },
+    meta:`<b>Athens</b>`,
+    pop:`Building spatial data infrastructure & internal tooling. Now learning photogrammetry.`,
+    moreLabel:"Projects",
+    projects:[
+      { name:"Municipal spatial data infrastructure",
+        body:`Design and operation of PostGIS / GeoServer / GeoNetwork stacks for
+              Palaio Faliro, Chalandri, Oraiokastro, Naxos and Kalamata — data models,
+              cartographic styling, web viewers and INSPIRE-compliant metadata.` },
+      { name:"GET-Suite",
+        body:`A set of standalone PyQt6 desktop tools that automate the repetitive
+              parts of the workflow and run quality checks on data and published services.` },
+      { name:"GIMM — metadata manager",
+        body:`Desktop application bridging GeoServer and GeoNetwork so layer publication
+              and INSPIRE metadata stay in step, with validation before anything is committed.` },
+      { name:"Road asset survey pipeline",
+        body:`Mobile road-survey observations pulled from the Vaisala RoadAI API, converted
+              to GeoJSON, snapped to road centrelines and rendered as per-class traffic-sign
+              layers in MapLibre and Folium.` },
+      { name:"Urban environmental indicators",
+        body:`Vegetation cover, land surface temperature and outdoor thermal comfort mapped
+              from Sentinel-2, Landsat 8/9 and ECOSTRESS, with SOLWEIG/UMEP modelling.` },
+      { name:"Field data capture",
+        body:`Self-hosted QFieldCloud deployment and QField project configuration for
+              surveyors working offline.` }
+    ],
+    details:[
+      ["Focus","Spatial data infrastructure · remote sensing · desktop tooling"],
+      ["Learning","Photogrammetry — UAV survey planning through to dense point clouds"]
+    ] },
 
   { tag:"Toolbox", name:"THE STACK", title:"How the work gets built",
     coords:[37.985,23.730], zoom:10.5,
     body:`A self-hosted, open-source geospatial pipeline — from the database to the
           field app to the desktop tools I write.`,
-    stack:["PostGIS","GeoServer","GeoNetwork","QGIS","QFieldCloud","Python","PyQt6","Docker","SQL"] },
+    stack:["PostGIS","GeoServer","GeoNetwork","QGIS","QFieldCloud","Python","PyQt6","Docker","SQL"],
+    moreLabel:"By layer",
+    details:[
+      ["Data","PostgreSQL / PostGIS · GDAL · EPSG:2100 (EGSA87) as the working grid"],
+      ["Services","GeoServer (WMS / WFS-T / WMTS) · GeoNetwork · GeoServer ACL"],
+      ["Desktop","QGIS · custom PyQt6 applications"],
+      ["Field","QField · self-hosted QFieldCloud"],
+      ["Remote sensing","SNAP · ISCE2 · MintPy · UMEP / SOLWEIG · rasterio · GDAL"],
+      ["Web","MapLibre GL JS · OpenLayers · Folium · Leaflet"],
+      ["Infrastructure","Docker · nginx · Linux · WireGuard · self-hosted on ARM64"]
+    ] },
 
   { tag:"Beyond work", name:"HELMOS", title:"Astronomy, astrophotography &amp; the deep blue",
     coords:[37.985,22.203], zoom:9.5, marker:true,
     body:`Off the clock I chase dark skies and star trails (see my
           <a href="https://github.com/theogatsios" target="_blank" rel="noopener">astrotrails</a>
           generator), and dive the Aegean. Pin parked near Mt. Helmos — high, dark and clear.`,
-    meta:`<b>Dark-sky site</b> · swap for your favourite spot`,
-    pop:`Dark skies, star trails and Aegean dives.` },
+    meta:`<b>Dark-sky site</b> — Mt. Helmos, Achaia`,
+    pop:`Dark skies, star trails and Aegean dives.`,
+    projects:[
+      { name:"astrotrails", link:"https://github.com/theogatsios",
+        body:`Open-source Python tool that stacks long exposure sequences into star trails,
+              with gap filling and configurable blending.` }
+    ],
+    details:[
+      ["Astronomy","Deep-sky and wide-field astrophotography · image stacking and calibration"],
+      ["Diving","Recreational scuba across the Aegean"],
+      ["Self-hosting","A small ARM64 home server running Nextcloud, VPN and a handful of services"]
+    ] },
 
   { tag:"Get in touch", name:"CONTACT", title:"Let's map something",
     coords:[37.928,23.700], zoom:8.5,
@@ -269,6 +396,39 @@ function popupHTML(s){
   </div>`;
 }
 
+/* Builds the contents of the expandable panel: an optional thesis block,
+   an optional project list, and an optional set of label/value rows.
+   Returns "" when a chapter has nothing extra, so no button is rendered. */
+function detailHTML(s){
+  let out="";
+  if(s.thesis){
+    out+=`<div class="dblock">
+      <p class="dlabel">Thesis</p>
+      <p class="dtitle">${s.thesis.link
+        ? `<a href="${s.thesis.link}" target="_blank" rel="noopener">${s.thesis.title}</a>`
+        : s.thesis.title}</p>
+      ${s.thesis.body?`<p class="dbody">${s.thesis.body}</p>`:""}
+    </div>`;
+  }
+  if(s.projects){
+    out+=`<div class="dblock">
+      <p class="dlabel">${s.projectsLabel||"Selected work"}</p>
+      <ul class="plist">${s.projects.map(p=>`<li>
+        <p class="pname">${p.link
+          ? `<a href="${p.link}" target="_blank" rel="noopener">${p.name}</a>`
+          : p.name}${p.when?`<span class="pwhen">${p.when}</span>`:""}</p>
+        ${p.body?`<p class="pbody">${p.body}</p>`:""}
+      </li>`).join("")}</ul>
+    </div>`;
+  }
+  if(s.details){
+    out+=`<div class="dblock">
+      <dl class="drows">${s.details.map(d=>`<dt>${d[0]}</dt><dd>${d[1]}</dd>`).join("")}</dl>
+    </div>`;
+  }
+  return out;
+}
+
 STORY.forEach((s,i)=>{
   if(s.type==="intro"){
     const el=document.createElement("section");
@@ -284,10 +444,33 @@ STORY.forEach((s,i)=>{
   if(s.stack)   html+=`<div class="stack">${s.stack.map(t=>`<span>${t}</span>`).join("")}</div>`;
   if(s.contact) html+=`<div class="contact">${s.contact.map(c=>`<span>${c[0]} ▸</span> ${c[1]}`).join("")}</div>`;
   if(s.meta)    html+=`<p class="meta">${s.meta}</p>`;
-  if(s.marker)  html+=`<p class="hint">▸ click the pin on the map for a popup</p>`;
   if(s.note)    html+=`<span class="edit">${s.note}</span>`;
+
+  const extra=detailHTML(s);
+  const openLabel=s.moreLabel||"Read more";
+  if(extra){
+    html+=`<div class="more">
+      <button class="more-btn" type="button" aria-expanded="false" aria-controls="more-${i}">
+        <span class="chev">▶</span><span class="lbl">${openLabel}</span>
+      </button>
+      <div class="more-panel" id="more-${i}"><div class="more-inner">${extra}</div></div>
+    </div>`;
+  }
+
   el.innerHTML=html;
   narrative.appendChild(el);
+
+  const btn=el.querySelector(".more-btn");
+  if(btn){
+    const panel=el.querySelector(".more-panel");
+    const lbl=btn.querySelector(".lbl");
+    btn.addEventListener("click",()=>{
+      const open=btn.getAttribute("aria-expanded")==="true";
+      btn.setAttribute("aria-expanded",String(!open));
+      panel.classList.toggle("open",!open);
+      lbl.textContent=open?openLabel:"Close";
+    });
+  }
 
   if(s.marker){
     const hit=document.createElement("div");
