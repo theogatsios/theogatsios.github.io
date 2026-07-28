@@ -47,15 +47,25 @@
     background:linear-gradient(90deg,var(--gold),var(--cyan));transition:width .25s ease}
 
   /* ---------- MARKERS ---------- */
-  .pin-hit{width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .pin-hit{width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;
+    transition:opacity .4s ease}
   .pin{position:relative;width:14px;height:14px}
   .pin i{position:absolute;inset:0;border-radius:50%;background:var(--gold);
-    box-shadow:0 0 0 1.5px rgba(16,24,36,.85),0 1px 5px rgba(0,0,0,.4);transition:transform .35s ease}
+    box-shadow:0 0 0 1.5px rgba(16,24,36,.85),0 1px 5px rgba(0,0,0,.4);
+    transition:transform .35s ease,background .4s ease,box-shadow .4s ease}
   .pin-hit:hover .pin i{transform:scale(1.2)}
-  .pin.active i{transform:scale(1.45);background:#f2bd62;
-    box-shadow:0 0 0 1.5px rgba(16,24,36,.9),0 0 16px 4px rgba(232,177,94,.55)}
   .pin .ring{position:absolute;inset:-6px;border-radius:50%;border:1px solid var(--gold);opacity:0}
-  .pin.active .ring{animation:pulse 2.4s ease-out infinite}
+
+  /* current chapter */
+  .pin-hit.on .pin i{transform:scale(1.45);background:#f2bd62;
+    box-shadow:0 0 0 1.5px rgba(16,24,36,.9),0 0 16px 4px rgba(232,177,94,.55)}
+  .pin-hit.on .pin .ring{animation:pulse 2.4s ease-out infinite}
+  /* every other chapter, PIN_MODE "dim": still there, out of the way, not clickable */
+  .pin-hit.dim{pointer-events:none;opacity:.62}
+  .pin-hit.dim .pin i{background:#55637a;transform:scale(.7);
+    box-shadow:0 0 0 1.5px rgba(16,24,36,.7)}
+  /* PIN_MODE "solo": everything but the current chapter goes away */
+  .pin-hit.hide{opacity:0;pointer-events:none}
   @keyframes pulse{0%{transform:scale(.6);opacity:.7}100%{transform:scale(2.4);opacity:0}}
 
   /* ---------- POPUP (themed) ---------- */
@@ -152,6 +162,48 @@
     margin-left:10px;letter-spacing:.06em}
   .more-inner .pbody{font-size:13.5px;line-height:1.62;color:var(--text-dim);margin:0}
 
+  /* ---------- LAYER TOGGLES (projects that load data) ---------- */
+  .plist li.live{transition:border-left-color .3s ease}
+  .plist li.live.on{border-left-color:var(--gold-soft)}
+  .play{background:transparent;border:0;padding:0;margin:0;cursor:pointer;text-align:left;
+    display:inline-flex;align-items:baseline;gap:9px;font:inherit;color:#e6ecf5;
+    border-bottom:1px solid transparent;transition:color .2s,border-color .2s}
+  .play:hover{color:var(--cyan);border-bottom-color:var(--cyan)}
+  .play:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+  .play[aria-pressed="true"]{color:var(--gold);border-bottom-color:transparent}
+  .play .glyph{flex:0 0 auto;width:13px;height:13px;align-self:center;
+    fill:none;stroke:currentColor;stroke-width:1.1;opacity:.65;transition:opacity .2s}
+  .play:hover .glyph,.play[aria-pressed="true"] .glyph{opacity:1}
+  .play[aria-pressed="true"] .glyph .top{fill:var(--gold);fill-opacity:.28}
+  /* thesis title is a bigger target: inherits Fraunces from .dtitle */
+  .more-inner .dtitle .play{color:#eef2f8;align-items:center}
+  .more-inner .dtitle .play:hover{color:var(--cyan)}
+  .more-inner .dtitle .play[aria-pressed="true"]{color:var(--gold)}
+  .more-inner .dtitle .play .glyph{width:15px;height:15px}
+  .more-inner .plink{font-family:"IBM Plex Mono",monospace;font-size:11px;margin:6px 0 0}  .more-inner .pstatus{font-family:"IBM Plex Mono",monospace;font-size:11px;margin:6px 0 0;
+    color:#566374;letter-spacing:.04em}
+  .more-inner .pstatus.err{color:#d98a7a}
+  .pstatus .dot{display:inline-block;width:5px;height:5px;border-radius:50%;
+    background:var(--cyan);margin-right:7px;vertical-align:1px;animation:blink 1s ease-in-out infinite}
+  @keyframes blink{0%,100%{opacity:.25}50%{opacity:1}}
+
+  /* ---------- LEGEND ---------- */
+  .legend{position:absolute;left:18px;top:18px;z-index:5;min-width:132px;max-width:196px;
+    font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--text-dim);
+    background:rgba(10,15,22,.72);backdrop-filter:blur(6px);border:1px solid var(--line);
+    border-radius:6px;padding:10px 12px 11px;pointer-events:none;letter-spacing:.02em}
+  .legend h5{margin:0 0 8px;font-family:"IBM Plex Mono",monospace;font-size:10px;
+    letter-spacing:.18em;text-transform:uppercase;color:var(--gold-soft);font-weight:500}
+  .legend .bar{height:7px;border-radius:2px;margin-bottom:5px}
+  .legend .ends{display:flex;justify-content:space-between;color:#6b7b8f}
+  .legend .sw{display:flex;align-items:center;gap:8px;margin-top:5px}
+  .legend .sw i{width:11px;height:11px;border-radius:2px;flex:0 0 auto;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.09)}
+  .hud .probe{color:var(--cyan)}
+  @media (max-width:900px){
+    .legend{left:12px;top:12px;font-size:10px;padding:8px 10px 9px;min-width:112px}
+  }
+
   .drows{margin:0;display:grid;grid-template-columns:minmax(84px,auto) 1fr;gap:9px 20px}
   .drows dt{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;
     text-transform:uppercase;color:#5a6a7d;padding-top:3px}
@@ -194,9 +246,11 @@
   <div class="narrative" id="narrative"></div>
   <div class="mapwrap">
     <div id="map"></div>
+    <div class="legend" id="legend" hidden></div>
     <div class="hud" id="hud">
       <div><b id="hud-name">GREECE</b></div>
       <div id="hud-coords">38.6000° N&nbsp;&nbsp;23.8000° E</div>
+      <div class="probe" id="hud-probe" hidden></div>
       <div class="crs">WGS84 / basemap EPSG:3857 · native EPSG:2100</div>
     </div>
   </div>
@@ -216,7 +270,36 @@
      projects -> [{name, body?, when?, link?}, ...]
      details  -> [["Label","value (HTML allowed)"], ...]
      moreLabel / projectsLabel -> override the button / list headings.
+
+   A thesis OR a project entry becomes a clickable map layer by adding
+   `layer` / `layers` (plus optional bounds, legend, probe). See LAYER ENGINE.
    ========================================================================= */
+/* ---------- DEMO DATASETS ---------------------------------------------------
+   Inline GeoJSON so the layer toggles work with no external files. Swap these
+   for real URLs — templates for COG / WMS / XYZ / image are at the bottom of
+   this script. Anything GeoJSON must be WGS84, not EPSG:2100.
+   -------------------------------------------------------------------------- */
+const MUNICIPALITIES={type:"FeatureCollection",features:[
+  ["Palaio Faliro",23.7047,37.9530],
+  ["Chalandri",    23.7983,38.0219],
+  ["Oraiokastro",  22.9320,40.7450],
+  ["Naxos",        25.3766,37.1036],
+  ["Kalamata",     22.1142,37.0389]
+].map(([name,lng,lat])=>({type:"Feature",properties:{name},
+  geometry:{type:"Point",coordinates:[lng,lat]}}))};
+
+const LA_PALMA_AOI={type:"FeatureCollection",features:[{
+  type:"Feature",properties:{name:"Cumbre Vieja — processing extent"},
+  geometry:{type:"Polygon",coordinates:[[
+    [-17.93,28.53],[-17.80,28.53],[-17.80,28.68],[-17.93,28.68],[-17.93,28.53]
+  ]]}}]};
+
+const ARGOS_AOI={type:"FeatureCollection",features:[{
+  type:"Feature",properties:{name:"Argos basin — InSAR footprint"},
+  geometry:{type:"Polygon",coordinates:[[
+    [22.66,37.55],[22.83,37.55],[22.83,37.71],[22.66,37.71],[22.66,37.55]
+  ]]}}]};
+
 const STORY = [
   { type:"intro", label:"Geospatial CV",
     h1:'Theo <span class="em">Gatsios</span>',
@@ -250,7 +333,9 @@ const STORY = [
     thesis:{
       title:"Multi-Temporal SAR Interferometry on the Argos basin",
       body:`Ground-deformation time series built from stacked Sentinel-1 acquisitions,
-            used to characterise subsidence patterns across the basin.` },
+            used to characterise subsidence patterns across the basin.`,
+      layer:{type:"geojson", data:ARGOS_AOI, color:"#5fd0d8"},
+      legend:{title:"Thesis AOI", items:[["#5fd0d8","Argos basin footprint"]]} },
     details:[
       ["Methods","Seismology · potential fields · signal processing · inverse problems"],
       ["Tools","MATLAB · Python · GMT"]
@@ -271,7 +356,9 @@ const STORY = [
     projects:[
       { name:"La Palma pre-eruption deformation", when:"2021",
         body:`SBAS processing of the months preceding the Cumbre Vieja eruption —
-              stack design, coherence screening and displacement time series.` },
+              stack design, coherence screening and displacement time series.`,
+        layer:{type:"geojson", data:LA_PALMA_AOI, color:"#5fd0d8"},
+        legend:{title:"Processing extent", items:[["#5fd0d8","Cumbre Vieja AOI"]]} },
       { name:"precise-mtinsar",
         body:`A parallelised, GPU-aware Python package for multi-temporal InSAR
               processing, shipped with a synthetic demo dataset.` }
@@ -289,7 +376,9 @@ const STORY = [
       { name:"Municipal spatial data infrastructure",
         body:`Design and operation of PostGIS / GeoServer / GeoNetwork stacks for
               Palaio Faliro, Chalandri, Oraiokastro, Naxos and Kalamata — data models,
-              cartographic styling, web viewers and INSPIRE-compliant metadata.` },
+              cartographic styling, web viewers and INSPIRE-compliant metadata.`,
+        layer:{type:"geojson", data:MUNICIPALITIES, color:"#e8b15e"},
+        legend:{title:"Clients", items:[["#e8b15e","Municipality served"]]} },
       { name:"GET-Suite",
         body:`A set of standalone PyQt6 desktop tools that automate the repetitive
               parts of the workflow and run quality checks on data and published services.` },
@@ -358,6 +447,15 @@ const STORY = [
 
 const LL = c => [c[1], c[0]];   // [lat,lng] -> [lng,lat] for MapLibre
 
+/* ---------- PIN VISIBILITY -----------------------------------------------
+   How pins for chapters you are NOT reading should behave:
+     "dim"  pale grey, smaller, not clickable — keeps the shape of the whole
+            CV visible on the map while the current chapter stands out
+     "solo" hidden completely — only the current chapter's pin exists
+     "all"  every pin gold and clickable at all times
+   ------------------------------------------------------------------------ */
+const PIN_MODE = "dim";
+
 /* ---------- BASEMAP -----------------------------------------------------
    OpenFreeMap "Positron" — light vector basemap (free, no API key).
    Vector tiles are tiny and zoom continuously, so camera flights stay smooth
@@ -377,15 +475,261 @@ map.addControl(new maplibregl.NavigationControl({showCompass:false}), "bottom-ri
 map.scrollZoom.enable();           // cursor over map → wheel zooms (and won't scroll the page)
 map.dragRotate.disable();
 map.touchZoomRotate.disableRotation();
+let styleReady=false;
 map.on("load", ()=>{
   // remove every text/label layer so only the pins carry context
   map.getStyle().layers.forEach(l=>{ if(l.type==="symbol") map.removeLayer(l.id); });
   map.resize();
+  styleReady=true;
+});
+function whenReady(fn){ styleReady ? fn() : map.once("load", fn); }
+
+/* =========================================================================
+   LAYER ENGINE
+   One project's data at a time. Clicking a project loads its layers, clicking
+   it again removes them, and changing chapter removes them automatically.
+
+   A project gets a clickable toggle by adding `layer` (one) or `layers` (many):
+
+     layer:{ type:"geojson", data:"./data/sites.geojson", color:"#5fd0d8" }
+
+   TYPES
+     geojson : data = URL string or inline object. Fetched here (not by
+               MapLibre) so we can auto-fit the extent and report errors.
+               Fill / line / circle sub-layers are added by geometry type.
+               Must be WGS84 — reproject out of EPSG:2100 first, or ask
+               GeoServer WFS for srsName=EPSG:4326.
+     cog     : Cloud Optimized GeoTIFF, must be EPSG:3857. Optional
+               `colorRamp:"BrewerRdYlGn9,-0.2,0.8,c"` for single-band data.
+     dem     : single-band COG rendered as hillshade.
+     wms     : GeoServer (or any) WMS. url + layers, reprojected server-side.
+     xyz     : pre-rendered tile pyramid, e.g. gdal2tiles output.
+     image   : static PNG/JPG pinned to four corner coordinates.
+
+   Optional per project: bounds:[[w,s],[e,n]] to frame the data,
+   legend:{...} for the map legend, probe:{...} to read raster values on hover.
+   ========================================================================= */
+
+const COG_PLUGIN = "https://unpkg.com/@geomatico/maplibre-cog-protocol@0.9.0/dist/index.js";
+let cogLoading=null;
+function ensureCOG(){
+  if(cogLoading) return cogLoading;
+  cogLoading=new Promise((resolve,reject)=>{
+    const sc=document.createElement("script");
+    sc.src=COG_PLUGIN; sc.crossOrigin="anonymous";
+    sc.onload=()=>{
+      try{ maplibregl.addProtocol("cog", MaplibreCOGProtocol.cogProtocol); resolve(); }
+      catch(err){ reject(err); }
+    };
+    sc.onerror=()=>reject(new Error("COG plugin failed to load"));
+    document.head.appendChild(sc);
+  });
+  return cogLoading;
+}
+
+/* extent of any GeoJSON, so the camera can frame what just loaded */
+function bboxOf(gj){
+  let w=180,s=90,e=-180,n=-90,hit=false;
+  const walk=c=>{
+    if(typeof c[0]==="number"){
+      hit=true; w=Math.min(w,c[0]); e=Math.max(e,c[0]);
+      s=Math.min(s,c[1]); n=Math.max(n,c[1]); return;
+    }
+    c.forEach(walk);
+  };
+  const geom=g=>{
+    if(!g) return;
+    if(g.type==="GeometryCollection") g.geometries.forEach(geom);
+    else if(g.coordinates) walk(g.coordinates);
+  };
+  if(gj.type==="FeatureCollection") (gj.features||[]).forEach(f=>geom(f.geometry));
+  else if(gj.type==="Feature") geom(gj.geometry);
+  else geom(gj);
+  return hit ? [[w,s],[e,n]] : null;
+}
+
+const POLY=["match",["geometry-type"],["Polygon","MultiPolygon"],true,false];
+const LINE=["match",["geometry-type"],["LineString","MultiLineString"],true,false];
+const PT  =["match",["geometry-type"],["Point","MultiPoint"],true,false];
+
+/* live = what is currently on the map; emptied by clearData() */
+const legendBox=document.getElementById("legend");
+const hudProbe=document.getElementById("hud-probe");
+let probeSpec=null, probeAt=0;
+const live={key:null, layers:[], sources:[], terrain:false, btn:null, host:null};
+
+function clearData(){
+  live.layers.forEach(id=>{ if(map.getLayer(id)) map.removeLayer(id); });
+  if(live.terrain){ try{ map.setTerrain(null); }catch(e){} live.terrain=false; }
+  live.sources.forEach(id=>{ if(map.getSource(id)) map.removeSource(id); });
+  live.layers=[]; live.sources=[];
+  if(live.btn){
+    live.btn.setAttribute("aria-pressed","false");
+    live.host && live.host.classList.remove("on");
+    const st=live.host && live.host.querySelector(".pstatus");
+    if(st){ st.textContent=""; st.classList.remove("err"); }
+  }
+  live.btn=null; live.host=null; live.key=null;
+  setLegend(null);
+  probeSpec=null; hudProbe.hidden=true;
+}
+
+/* ---- source + layer construction, one branch per type ---- */
+async function addSpec(spec,i,key){
+  const sid=`d-${key}-${i}`, base=`l-${key}-${i}`;
+  const op = spec.opacity===undefined ? 0.85 : spec.opacity;
+
+  if(spec.type==="geojson"){
+    let gj=spec.data;
+    if(typeof gj==="string"){
+      const r=await fetch(gj);
+      if(!r.ok) throw new Error(`${r.status} fetching ${gj.split("/").pop()}`);
+      gj=await r.json();
+    }
+    map.addSource(sid,{type:"geojson",data:gj});
+    live.sources.push(sid);
+    const col=spec.color||"var-gold";
+    const c=col==="var-gold"?"#e8b15e":col;
+    const P=spec.paint||{};
+    map.addLayer({id:`${base}-fill`,type:"fill",source:sid,filter:POLY,
+      paint:Object.assign({"fill-color":c,"fill-opacity":.22},P.fill||{})});
+    map.addLayer({id:`${base}-line`,type:"line",source:sid,
+      filter:["any",POLY,LINE],
+      paint:Object.assign({"line-color":c,"line-width":1.6,"line-opacity":.9},P.line||{})});
+    map.addLayer({id:`${base}-pt`,type:"circle",source:sid,filter:PT,
+      paint:Object.assign({"circle-radius":4.5,"circle-color":c,"circle-opacity":.9,
+        "circle-stroke-width":1,"circle-stroke-color":"#0a0f16"},P.circle||{})});
+    live.layers.push(`${base}-fill`,`${base}-line`,`${base}-pt`);
+    return spec.fit===false ? null : bboxOf(gj);
+  }
+
+  if(spec.type==="cog"){
+    await ensureCOG();
+    const url=`cog://${spec.url}`+(spec.colorRamp?`#color:${spec.colorRamp}`:"");
+    map.addSource(sid,{type:"raster",url,tileSize:256});   // 256 per plugin guidance
+    live.sources.push(sid);
+    map.addLayer({id:base,type:"raster",source:sid,paint:{"raster-opacity":op}});
+    live.layers.push(base);
+    return null;
+  }
+
+  if(spec.type==="dem"){
+    await ensureCOG();
+    map.addSource(sid,{type:"raster-dem",url:`cog://${spec.url}#dem`,tileSize:256});
+    live.sources.push(sid);
+    if(spec.terrain){ map.setTerrain({source:sid,exaggeration:spec.exaggeration||1.2}); live.terrain=true; }
+    else{
+      map.addLayer({id:base,type:"hillshade",source:sid,
+        paint:{"hillshade-exaggeration":spec.exaggeration||.55}});
+      live.layers.push(base);
+    }
+    return null;
+  }
+
+  if(spec.type==="wms"){
+    // WMS 1.1.1 keeps bbox as minx,miny,maxx,maxy — no 1.3.0 axis-order surprises
+    const q=new URLSearchParams({service:"WMS",version:"1.1.1",request:"GetMap",
+      layers:spec.layers,styles:spec.styles||"",format:spec.format||"image/png",
+      transparent:"true",srs:"EPSG:3857",width:"256",height:"256"});
+    const sep=spec.url.includes("?")?"&":"?";
+    map.addSource(sid,{type:"raster",tiles:[`${spec.url}${sep}${q}&bbox={bbox-epsg-3857}`],
+      tileSize:256,attribution:spec.attribution||""});
+    live.sources.push(sid);
+    map.addLayer({id:base,type:"raster",source:sid,paint:{"raster-opacity":op}});
+    live.layers.push(base);
+    return null;
+  }
+
+  if(spec.type==="xyz"){
+    map.addSource(sid,{type:"raster",tiles:[spec.url],tileSize:spec.tileSize||256,
+      minzoom:spec.minzoom||0,maxzoom:spec.maxzoom||22,attribution:spec.attribution||""});
+    live.sources.push(sid);
+    map.addLayer({id:base,type:"raster",source:sid,paint:{"raster-opacity":op}});
+    live.layers.push(base);
+    return null;
+  }
+
+  if(spec.type==="image"){
+    map.addSource(sid,{type:"image",url:spec.url,coordinates:spec.coordinates});
+    live.sources.push(sid);
+    map.addLayer({id:base,type:"raster",source:sid,paint:{"raster-opacity":op}});
+    live.layers.push(base);
+    return null;
+  }
+
+  throw new Error(`unknown layer type "${spec.type}"`);
+}
+
+/* p is any object carrying layer/layers (+ optional bounds, legend, probe):
+   a project entry or a thesis entry, they go through the same path. */
+function loadData(p,key,btn,host){
+  if(live.key===key){ clearData(); return; }      // second click switches it off
+  clearData();
+  live.key=key; live.btn=btn; live.host=host;
+  btn.setAttribute("aria-pressed","true");
+  host.classList.add("on");
+  const st=host.querySelector(".pstatus");
+  st.classList.remove("err");
+  st.innerHTML=`<span class="dot"></span>loading`;
+
+  const specs=p.layers||[p.layer];
+  whenReady(async ()=>{
+    try{
+      let auto=null;
+      for(let i=0;i<specs.length;i++){
+        const bb=await addSpec(specs[i],i,key);
+        if(bb&&!auto) auto=bb;
+      }
+      if(live.key!==key) return;                  // scrolled away mid-load
+      st.textContent="on the map";
+      setLegend(p.legend||null);
+      if(p.probe){ probeSpec=p.probe; hudProbe.hidden=false; hudProbe.textContent=`${p.probe.label||"value"} —`; }
+      const box=p.bounds||auto;
+      if(box) map.fitBounds(box,{padding:{top:70,bottom:70,left:60,right:60},duration:1400,maxZoom:p.maxZoom||16});
+    }catch(err){
+      if(live.key!==key) return;
+      st.textContent=`could not load — ${err.message}`;
+      st.classList.add("err");
+      console.error("[geo-cv]",err);
+    }
+  });
+}
+
+/* ---- legend ---- */
+function setLegend(cfg){
+  if(!cfg){ legendBox.hidden=true; legendBox.innerHTML=""; return; }
+  let h=cfg.title?`<h5>${cfg.title}</h5>`:"";
+  if(cfg.ramp){
+    h+=`<div class="bar" style="background:linear-gradient(90deg,${cfg.ramp.join(",")})"></div>
+        <div class="ends"><span>${cfg.min??""}</span><span>${cfg.max??""}</span></div>`;
+  }
+  if(cfg.items){
+    h+=cfg.items.map(it=>`<div class="sw"><i style="background:${it[0]}"></i><span>${it[1]}</span></div>`).join("");
+  }
+  legendBox.innerHTML=h; legendBox.hidden=false;
+}
+
+/* ---- optional raster value readout on hover ---- */
+map.on("mousemove",({lngLat})=>{
+  if(!probeSpec||!window.MaplibreCOGProtocol) return;
+  const now=performance.now();
+  if(now-probeAt<120) return;                     // throttle: this reads pixels
+  probeAt=now;
+  MaplibreCOGProtocol.locationValues(probeSpec.url,
+    {latitude:lngLat.lat,longitude:lngLat.lng}, map.getZoom())
+    .then(v=>{
+      if(!probeSpec) return;
+      const n=v&&v[0];
+      hudProbe.textContent=`${probeSpec.label||"value"} ${
+        (n==null||Number.isNaN(n)) ? "—" : n.toFixed(probeSpec.digits??2)}${probeSpec.unit||""}`;
+    })
+    .catch(()=>{});
 });
 
 /* ---------- build narrative + markers ---------- */
 const narrative = document.getElementById("narrative");
-const pins = {};
+const pins = {};      // chapter index -> .pin-hit element
+const popups = {};    // chapter index -> maplibregl.Popup
 
 function popupHTML(s){
   return `<div class="pc">
@@ -396,29 +740,51 @@ function popupHTML(s){
   </div>`;
 }
 
+const GLYPH=`<svg class="glyph" viewBox="0 0 14 14" aria-hidden="true">`
+  +`<path class="top" d="M7 1.4 12.6 4.3 7 7.2 1.4 4.3Z"/>`
+  +`<path d="M1.4 7 7 9.9 12.6 7"/><path d="M1.4 9.7 7 12.6 12.6 9.7"/></svg>`;
+
 /* Builds the contents of the expandable panel: an optional thesis block,
    an optional project list, and an optional set of label/value rows.
-   Returns "" when a chapter has nothing extra, so no button is rendered. */
-function detailHTML(s){
+   Returns "" when a chapter has nothing extra, so no button is rendered.
+   A project carrying `layer` or `layers` becomes a clickable data toggle. */
+function detailHTML(s,i){
   let out="";
   if(s.thesis){
+    const t=s.thesis, hasData=!!(t.layer||t.layers);
+    const head = hasData
+      ? `<button class="play" type="button" aria-pressed="false" data-t="1"
+           title="Show this data on the map">${GLYPH}<span class="ptxt">${t.title}</span></button>`
+      : t.link
+        ? `<a href="${t.link}" target="_blank" rel="noopener">${t.title}</a>`
+        : t.title;
     out+=`<div class="dblock">
       <p class="dlabel">Thesis</p>
-      <p class="dtitle">${s.thesis.link
-        ? `<a href="${s.thesis.link}" target="_blank" rel="noopener">${s.thesis.title}</a>`
-        : s.thesis.title}</p>
-      ${s.thesis.body?`<p class="dbody">${s.thesis.body}</p>`:""}
+      <p class="dtitle">${head}</p>
+      ${t.body?`<p class="dbody">${t.body}</p>`:""}
+      ${hasData&&t.link?`<p class="plink"><a href="${t.link}" target="_blank" rel="noopener">read it ↗</a></p>`:""}
+      ${hasData?`<p class="pstatus" role="status" aria-live="polite"></p>`:""}
     </div>`;
   }
   if(s.projects){
     out+=`<div class="dblock">
       <p class="dlabel">${s.projectsLabel||"Selected work"}</p>
-      <ul class="plist">${s.projects.map(p=>`<li>
-        <p class="pname">${p.link
-          ? `<a href="${p.link}" target="_blank" rel="noopener">${p.name}</a>`
-          : p.name}${p.when?`<span class="pwhen">${p.when}</span>`:""}</p>
-        ${p.body?`<p class="pbody">${p.body}</p>`:""}
-      </li>`).join("")}</ul>
+      <ul class="plist">${s.projects.map((p,n)=>{
+        const hasData=!!(p.layer||p.layers);
+        const when=p.when?`<span class="pwhen">${p.when}</span>`:"";
+        const head = hasData
+          ? `<button class="play" type="button" aria-pressed="false" data-p="${n}"
+               title="Show this data on the map">${GLYPH}<span class="ptxt">${p.name}</span>${when}</button>`
+          : p.link
+            ? `<a href="${p.link}" target="_blank" rel="noopener">${p.name}</a>${when}`
+            : `${p.name}${when}`;
+        return `<li class="${hasData?"live":""}">
+          <p class="pname">${head}</p>
+          ${p.body?`<p class="pbody">${p.body}</p>`:""}
+          ${hasData&&p.link?`<p class="plink"><a href="${p.link}" target="_blank" rel="noopener">source ↗</a></p>`:""}
+          ${hasData?`<p class="pstatus" role="status" aria-live="polite"></p>`:""}
+        </li>`;
+      }).join("")}</ul>
     </div>`;
   }
   if(s.details){
@@ -446,7 +812,7 @@ STORY.forEach((s,i)=>{
   if(s.meta)    html+=`<p class="meta">${s.meta}</p>`;
   if(s.note)    html+=`<span class="edit">${s.note}</span>`;
 
-  const extra=detailHTML(s);
+  const extra=detailHTML(s,i);
   const openLabel=s.moreLabel||"Read more";
   if(extra){
     html+=`<div class="more">
@@ -469,17 +835,30 @@ STORY.forEach((s,i)=>{
       btn.setAttribute("aria-expanded",String(!open));
       panel.classList.toggle("open",!open);
       lbl.textContent=open?openLabel:"Close";
+      // collapsing the panel takes its data off the map too
+      if(open && live.btn && el.contains(live.btn)) clearData();
     });
   }
+
+  // project toggles: click loads the data, click again removes it
+  el.querySelectorAll(".play[data-p]").forEach(pb=>{
+    const p=s.projects[+pb.dataset.p];
+    const li=pb.closest("li");
+    pb.addEventListener("click",()=>loadData(p,`${i}-p${pb.dataset.p}`,pb,li));
+  });
+
+  // thesis toggle: same mechanism, hosted by its .dblock
+  const tb=el.querySelector(".play[data-t]");
+  if(tb) tb.addEventListener("click",()=>loadData(s.thesis,`${i}-t`,tb,tb.closest(".dblock")));
 
   if(s.marker){
     const hit=document.createElement("div");
     hit.className="pin-hit";
-    hit.innerHTML=`<div class="pin" id="pin-${i}"><span class="ring"></span><i></i></div>`;
+    hit.innerHTML=`<div class="pin"><span class="ring"></span><i></i></div>`;
     const popup=new maplibregl.Popup({offset:18, closeButton:true, maxWidth:"280px"}).setHTML(popupHTML(s));
     new maplibregl.Marker({element:hit, anchor:"center"})
       .setLngLat(LL(s.coords)).setPopup(popup).addTo(map);
-    pins[i]=document.getElementById(`pin-${i}`);
+    pins[i]=hit; popups[i]=popup;
   }
 });
 
@@ -493,14 +872,28 @@ const hudCoords=document.getElementById("hud-coords");
 const rail=document.getElementById("rail");
 let current=-1;
 
+/* Pins belonging to other chapters: "dim" greys them out and makes them
+   unclickable, "solo" removes them entirely, "all" keeps every pin gold all
+   the time. Change PIN_MODE near the top of this script. */
+function setPins(idx){
+  Object.entries(pins).forEach(([k,hit])=>{
+    const on=+k===idx;
+    hit.classList.toggle("on",on);
+    hit.classList.toggle("dim",!on&&PIN_MODE==="dim");
+    hit.classList.toggle("hide",!on&&PIN_MODE==="solo");
+  });
+}
+
 function activate(idx){
   if(idx===current) return;
   current=idx;
   const s=STORY[idx];
+  clearData();                     // leaving a chapter takes its data off the map
+  Object.values(popups).forEach(p=>{ if(p.isOpen()) p.remove(); });
+  setPins(idx);
   map.flyTo({center:LL(s.coords), zoom:s.zoom, duration:1500, curve:1.42, essential:true});
   hudName.textContent=s.name||"";
   hudCoords.innerHTML=`${s.coords[0].toFixed(4)}° N&nbsp;&nbsp;${s.coords[1].toFixed(4)}° E`;
-  Object.entries(pins).forEach(([k,el])=>el.classList.toggle("active", +k===idx));
 }
 
 const io=new IntersectionObserver((entries)=>{
@@ -521,6 +914,68 @@ addEventListener("scroll",()=>{
 addEventListener("resize",()=>map.resize());
 
 document.querySelector(".intro").classList.add("go","seen");
+setPins(0);   // paint the initial pin state before the observer fires
+
+/* =========================================================================
+   LAYER TEMPLATES — paste one of these into a project as `layer:` or `layers:`
+
+   -- Single-band GeoTIFF with a colour ramp (NDVI, LST, dNBR) --------------
+   The COG must be EPSG:3857; the plugin does not reproject. From EPSG:2100:
+
+     gdalwarp in_2100.tif out_cog.tif -t_srs EPSG:3857 -of COG \
+       -co BLOCKSIZE=256 -co TILING_SCHEME=GoogleMapsCompatible \
+       -co COMPRESS=DEFLATE -co OVERVIEWS=IGNORE_EXISTING -dstnodata NaN
+
+     layer:{ type:"cog",
+             url:"https://theogat.com/data/ndvi_chalandri.tif",
+             colorRamp:"BrewerRdYlGn9,-0.2,0.8,c",   // scheme,min,max — c = continuous, - = reversed
+             opacity:.85 },
+     bounds:[[23.78,38.00],[23.83,38.05]],
+     legend:{ title:"NDVI", ramp:["#d73027","#fee08b","#1a9850"], min:"-0.2", max:"0.8" },
+     probe:{ url:"https://theogat.com/data/ndvi_chalandri.tif", label:"NDVI", digits:2 }
+
+   `probe` reads the pixel under the cursor and prints it in the HUD. It needs
+   the same URL, without the cog:// prefix.
+
+   -- GeoServer WMS (easiest route for anything already published) ----------
+   GeoServer reprojects EPSG:2100 to 3857 for you, and your SLD styling comes
+   along, so this needs no data preparation at all.
+
+     layer:{ type:"wms",
+             url:"https://gis.example.gr/geoserver/ws/wms",
+             layers:"ws:lst_summer_2025",
+             styles:"lst_ramp",          // optional named SLD
+             opacity:.8 }
+
+   -- Vectors straight from WFS (ask for 4326, not 2100) --------------------
+     layer:{ type:"geojson",
+             data:"https://gis.example.gr/geoserver/ws/wfs?service=WFS&version=2.0.0"
+                 +"&request=GetFeature&typeName=ws:poi&outputFormat=application/json"
+                 +"&srsName=EPSG:4326",
+             color:"#5fd0d8",
+             paint:{ line:{"line-width":2.4}, circle:{"circle-radius":6} } }
+
+   -- Pre-rendered tile pyramid (gdal2tiles / QGIS XYZ export) -------------
+     layer:{ type:"xyz", url:"https://theogat.com/tiles/burn/{z}/{x}/{y}.png",
+             minzoom:9, maxzoom:15, opacity:.9 }
+
+   -- Static image pinned to four corners (quick, no tiling) ----------------
+   Corners are clockwise from top-left, in [lng,lat].
+
+     layer:{ type:"image", url:"./data/lst_clip.png",
+             coordinates:[[23.78,38.05],[23.83,38.05],[23.83,38.00],[23.78,38.00]] }
+
+   -- Hillshade or 3D terrain from a single-band COG ------------------------
+     layer:{ type:"dem", url:"https://theogat.com/data/dem_cog.tif", exaggeration:.6 }
+     layer:{ type:"dem", url:"...", terrain:true, exaggeration:1.3 }
+
+   -- Several layers on one click -------------------------------------------
+     layers:[
+       { type:"wms", url:"...", layers:"ws:lst" },
+       { type:"geojson", data:"./data/boundary.geojson", color:"#e8b15e", fit:false }
+     ]
+   ========================================================================= */
+
 </script>
 </body>
 </html>
