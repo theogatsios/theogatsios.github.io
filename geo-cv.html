@@ -93,7 +93,8 @@
   .pc p{font-size:13px;line-height:1.5;color:var(--text-dim);margin:0}
   .pc .pc-meta{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#566374;margin-top:9px}
   /* popup logo: smaller, and kept clear of the close button */
-  .pc .logo{height:19px;max-width:132px;margin:0 0 10px}
+  .pc{--logo-h:19px}
+  .pc .logo{margin:0 0 10px}
   .pc .logolink{margin-bottom:10px}
   .pc .logolink .logo{margin-bottom:0}
 
@@ -129,8 +130,15 @@
      SVG needs a viewBox; without one the browser has no aspect ratio to use.
      Deliberately NOT scoped to .chapter — the same rules dress the logo inside
      map popups, where .chapter is not an ancestor. */
-  .logo{display:block;height:28px;width:auto;max-width:200px;
-    opacity:.82;transition:opacity .3s ease}
+  /* Size is driven by the custom property --logo-h, NOT by an inline height.
+     A custom property can still be overridden by a media query further down,
+     which an inline `style="height:..."` never could.
+     max-width is a proportion of the column rather than a fixed 200px: a fixed
+     cap pins the width while the height keeps growing, which squashes any logo
+     wide enough to reach it. object-fit is the backstop — if both axes ever do
+     get constrained, the image letterboxes instead of distorting. */
+  .logo{display:block;height:var(--logo-h,28px);width:auto;max-width:100%;
+    object-fit:contain;opacity:.82;transition:opacity .3s ease}
   /* white:true — turns any logo, whatever its colours, into a white silhouette.
      brightness(0) flattens it to black keeping alpha, invert(1) makes it white.
      Saves maintaining a separate white export of every logo. */
@@ -143,12 +151,17 @@
   .chapter .meta{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--text-dim);margin-top:6px;letter-spacing:.02em}
   .chapter .meta b{color:var(--gold-soft);font-weight:500}
   /* logo + meta on one line; wraps to two if the logo is wide or space is tight */
-  .metarow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px}
+  .metarow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px;
+    --logo-h:26px}
   .metarow .meta{margin-top:0}
-  .metarow .logo{height:26px}
+  /* never let the flex algorithm shrink the logo horizontally against a long
+     meta line — that narrows the width while the height stays put */
+  .metarow .logo,.metarow .logolink{flex:0 0 auto}
+  .metarow .meta{flex:1 1 auto;min-width:12em}
   @media (max-width:900px){
     .metarow{gap:11px}
-    .metarow .logo{height:22px}
+    /* scales whatever h was configured, instead of overriding it outright */
+    .logo{height:calc(var(--logo-h,28px) * .72)}
   }
   .hint{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#566374;margin-top:4px}
 
@@ -348,7 +361,9 @@ const STORY = [
   { tag:"Education · I", name:"BSc GEOLOGY", title:"BSc in Geology",
     coords:[38.2919714,21.7897984], zoom:13.5, marker:true,
     body:`Foundations in earth processes, structural geology and field mapping.`,
-    meta:`<b><a href="https://geology.upatras.gr/en/" target="_blank" rel="noopener">University of Patras</a></b>`,
+    logo:{src:"logos/up_2017_logo_en.png", alt:"University of Patras",
+          link:"https://geology.upatras.gr/en/", white:false, h:110},
+    //meta:`<b><a href="https://geology.upatras.gr/en/" target="_blank" rel="noopener">University of Patras</a></b>`,
     pop:`Earth processes, structural geology and field mapping.`,
     details:[
       ["Coursework","Structural geology · mineralogy & petrology · stratigraphy · hydrogeology · engineering geology"],
@@ -359,11 +374,11 @@ const STORY = [
   { tag: "Internship", name: "GeoHellas", title: "Laboratory Assistant @ GeoHellas",
     coords:[37.9391695,23.6961917], zoom:12.5, marker:true,
     // <-- KEEP YOUR OWN src HERE (the geohellas.com URL that worked)
-    logo:{src:"https://geohellas.com/wp-content/uploads/2023/04/geohellas_logo_white.svg", alt:"Geohellas S.A.",
-          link:"https://geohellas.com/", white:true},
+    logo:{src:"https://geohellas.com/wp-content/uploads/2023/04/geohellas_logo-01.svg", alt:"Geohellas S.A.",
+          link:"https://geohellas.com/", white:false, h:70},
     body:`Performed physicochemical property testing (pH, electric conductivity, water
           permeability) on attapulgite samples, including the preparation of dilutions and
-          concentrated solutions, and gained hands-on familiarity with the laboratory's XRD
+          concentrated solutiSons, and gained hands-on familiarity with the laboratory's XRD
           analysis workflow. Carried out bleaching trials on vegetable oils with
           spectrophotometric colour measurement, alongside absorbency testing of mineral
           absorbents.`,
@@ -374,7 +389,9 @@ const STORY = [
     coords:[37.9666322,23.7846110], zoom:12.5, marker:true,
     body:`Specialisation in geophysical methods and signal interpretation —
           the bridge into remote sensing.`,
-    meta:`<b><a href="https://en.geol.uoa.gr/" target="_blank" rel="noopener">National and Kapodistrian University of Athens</a></b>`,
+    logo:{src:"logos/nkua.png", alt:"National and Kapodistrian University of Athens",
+          link:"https://en.geol.uoa.gr/", white:false, h:90},
+    //meta:`<b><a href="https://en.geol.uoa.gr/" target="_blank" rel="noopener">National and Kapodistrian University of Athens</a></b>`,
     pop:`Geophysical methods and signal interpretation — the bridge into remote sensing.`,
     thesis:{
       title:"Multi-Temporal SAR Interferometry on the Argos basin",
@@ -790,7 +807,7 @@ function logoHTML(logo, fallbackAlt, opts){
   const alt = g.alt || fallbackAlt || "";
   const img = `<img class="logo${g.white?" white":""}${o.cls?" "+o.cls:""}"`
     + ` src="${g.src}" alt="${alt}"`
-    + (h?` style="height:${h}px"`:"")
+    + (h?` style="--logo-h:${h}px"`:"")
     + ` loading="lazy" decoding="async">`;
   // when linked, the <a> carries the label and the <img> alt goes empty so
   // screen readers announce the destination once rather than twice
