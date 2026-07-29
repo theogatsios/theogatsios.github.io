@@ -58,12 +58,12 @@
 
   /* current chapter */
   .pin-hit.on .pin i{transform:scale(1.45);background:#f2bd62;
-    box-shadow:0 0 0 1.5px rgba(16,24,36,.9),0 0 16px 4px rgba(232,177,94,.55)}
+    box-shadow:0 0 0 1.5px rgba(16, 24, 36, 0),0 0 16px 4px rgba(232,177,94,.55)}
   .pin-hit.on .pin .ring{animation:pulse 2.4s ease-out infinite}
   /* every other chapter, PIN_MODE "dim": still there, out of the way, not clickable */
   .pin-hit.dim{pointer-events:none;opacity:.62}
-  .pin-hit.dim .pin i{background:#55637a;transform:scale(.7);
-    box-shadow:0 0 0 1.5px rgba(16,24,36,.7)}
+  .pin-hit.dim .pin i{background:#a7a7a7b0;transform:scale(.7);
+    box-shadow:0 0 0 1.5px rgba(255, 255, 255, 0)}
   /* PIN_MODE "solo": everything but the current chapter goes away */
   .pin-hit.hide{opacity:0;pointer-events:none}
   @keyframes pulse{0%{transform:scale(.6);opacity:.7}100%{transform:scale(2.4);opacity:0}}
