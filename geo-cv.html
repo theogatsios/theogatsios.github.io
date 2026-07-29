@@ -291,9 +291,8 @@ const MUNICIPALITIES={type:"FeatureCollection",features:[
 const LA_PALMA_AOI={type:"FeatureCollection",features:[{
   type:"Feature",properties:{name:"Cumbre Vieja — processing extent"},
   geometry:{type:"Polygon",coordinates:[[
-    [-17.93,28.53],[-17.80,28.53],[-17.80,28.68],[-17.93,28.68],[-17.93,28.53]
+    [-18.01, 28.865],[-18.01,28.45],[-17.72,28.45],[-17.72,28.865],[-18.01,28.865]
   ]]}}]};
-
 const ARGOS_AOI={type:"FeatureCollection",features:[{
   type:"Feature",properties:{name:"Argos basin — InSAR footprint"},
   geometry:{type:"Polygon",coordinates:[[
@@ -323,6 +322,12 @@ const STORY = [
       ["Field work","Geological mapping campaigns across the Peloponnese and western Greece"],
       ["Carried over","Reading terrain before reading pixels — the habit that still shapes how I approach remote sensing."]
     ] },
+
+  { tag: "Internship", name: "GeoHellas", title: "Laboratory Assistant @ GeoHellas",
+    coords:[37.9391695,23.6961917], zoom:12.5, marker:true,
+    body:`<img src=https://geohellas.com/wp-content/uploads/2023/04/geohellas_logo_white.svg</img>Performed physicochemical property testing (pH, electric conductivity, water permeability) on attapulgite samples, including the preparation of dilutions and concentrated solutions, and gained hands-on familiarity with the laboratory's XRD analysis workflow. Carried out bleaching trials on vegetable oils with spectrophotometric colour measurement, alongside absorbency testing of mineral absorbents.`,
+    meta:`<b><a href="https://geohellas.com/" target="_blank" rel="noopener">Geohellas S.A.</a></b>`,
+    pop:`Geophysical methods and signal interpretation — the bridge into remote sensing.` },
 
   { tag:"Education · II", name:"MSc GEOPHYSICS", title:"MSc in Geophysics",
     coords:[37.9666322,23.7846110], zoom:12.5, marker:true,
