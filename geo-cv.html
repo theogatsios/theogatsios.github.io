@@ -92,6 +92,10 @@
     margin:0 0 7px;color:#eef2f8}
   .pc p{font-size:13px;line-height:1.5;color:var(--text-dim);margin:0}
   .pc .pc-meta{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#566374;margin-top:9px}
+  /* popup logo: smaller, and kept clear of the close button */
+  .pc .logo{height:19px;max-width:132px;margin:0 0 10px}
+  .pc .logolink{margin-bottom:10px}
+  .pc .logolink .logo{margin-bottom:0}
 
   /* nav control tint */
   .maplibregl-ctrl-group{background:var(--panel-2)!important;border:1px solid var(--line)!important}
@@ -120,8 +124,32 @@
   .chapter h2{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(26px,3vw,40px);
     line-height:1.04;margin:0 0 18px;color:#eef2f8;letter-spacing:-.01em}
   .chapter p{font-size:16px;line-height:1.72;color:var(--text);max-width:34em;margin:0 0 14px;font-weight:300}
+
+  /* organisation logo mark. Height drives the size and width follows, so the
+     SVG needs a viewBox; without one the browser has no aspect ratio to use.
+     Deliberately NOT scoped to .chapter — the same rules dress the logo inside
+     map popups, where .chapter is not an ancestor. */
+  .logo{display:block;height:28px;width:auto;max-width:200px;
+    opacity:.82;transition:opacity .3s ease}
+  /* white:true — turns any logo, whatever its colours, into a white silhouette.
+     brightness(0) flattens it to black keeping alpha, invert(1) makes it white.
+     Saves maintaining a separate white export of every logo. */
+  .logo.white{filter:brightness(0) invert(1)}
+  /* the wrapper when logo.link is set: no underline, no baseline gap */
+  .logolink{display:inline-flex;align-items:center;border-bottom:0}
+  .logolink:hover{border-bottom:0}
+  .logolink:hover .logo{opacity:1}
+  .logolink:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:2px}
   .chapter .meta{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--text-dim);margin-top:6px;letter-spacing:.02em}
   .chapter .meta b{color:var(--gold-soft);font-weight:500}
+  /* logo + meta on one line; wraps to two if the logo is wide or space is tight */
+  .metarow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px}
+  .metarow .meta{margin-top:0}
+  .metarow .logo{height:26px}
+  @media (max-width:900px){
+    .metarow{gap:11px}
+    .metarow .logo{height:22px}
+  }
   .hint{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#566374;margin-top:4px}
 
   /* ---------- EXPANDABLE DETAIL (thesis / projects / key-value rows) ---------- */
@@ -263,6 +291,11 @@
    to MapLibre's [lng, lat] internally, so just edit naturally.
    marker:true  -> drops a clickable gold pin that opens a popup.
    pop          -> short text shown inside the popup (falls back to nothing).
+   logo         -> "url" or {src, alt?, h?, white?, link?}. Renders on the meta
+                   line and again inside the map popup. white:true forces a
+                   white silhouette; link makes it clickable. Put logos here,
+                   never inside `body`. A logo that fails to load removes
+                   itself instead of leaving alt text in the layout.
 
    EXPANDABLE PANEL — any of these three keys adds a toggle under the chapter.
    Omit them all and no toggle appears.
@@ -325,9 +358,17 @@ const STORY = [
 
   { tag: "Internship", name: "GeoHellas", title: "Laboratory Assistant @ GeoHellas",
     coords:[37.9391695,23.6961917], zoom:12.5, marker:true,
-    body:`<img src=https://geohellas.com/wp-content/uploads/2023/04/geohellas_logo_white.svg</img>Performed physicochemical property testing (pH, electric conductivity, water permeability) on attapulgite samples, including the preparation of dilutions and concentrated solutions, and gained hands-on familiarity with the laboratory's XRD analysis workflow. Carried out bleaching trials on vegetable oils with spectrophotometric colour measurement, alongside absorbency testing of mineral absorbents.`,
-    meta:`<b><a href="https://geohellas.com/" target="_blank" rel="noopener">Geohellas S.A.</a></b>`,
-    pop:`Geophysical methods and signal interpretation — the bridge into remote sensing.` },
+    // <-- KEEP YOUR OWN src HERE (the geohellas.com URL that worked)
+    logo:{src:"https://geohellas.com/wp-content/uploads/2023/04/geohellas_logo_white.svg", alt:"Geohellas S.A.",
+          link:"https://geohellas.com/", white:true},
+    body:`Performed physicochemical property testing (pH, electric conductivity, water
+          permeability) on attapulgite samples, including the preparation of dilutions and
+          concentrated solutions, and gained hands-on familiarity with the laboratory's XRD
+          analysis workflow. Carried out bleaching trials on vegetable oils with
+          spectrophotometric colour measurement, alongside absorbency testing of mineral
+          absorbents.`,
+    //meta:`<b><a href="https://geohellas.com/" target="_blank" rel="noopener">Geohellas S.A.</a></b>`,
+    pop:`Industrial minerals lab — attapulgite testing, XRD, bleaching trials.` },
 
   { tag:"Education · II", name:"MSc GEOPHYSICS", title:"MSc in Geophysics",
     coords:[37.9666322,23.7846110], zoom:12.5, marker:true,
@@ -736,8 +777,33 @@ const narrative = document.getElementById("narrative");
 const pins = {};      // chapter index -> .pin-hit element
 const popups = {};    // chapter index -> maplibregl.Popup
 
+/* One logo builder for every place a logo appears, so the chapter and the popup
+   can never drift apart. `logo` is either a URL string or
+   {src, alt?, h?, white?, link?}. opts.h overrides the configured height (the
+   popup wants a smaller mark) and opts.cls adds a class. */
+function logoHTML(logo, fallbackAlt, opts){
+  if(!logo) return "";
+  const g = typeof logo==="string" ? {src:logo} : logo;
+  if(!g.src) return "";
+  const o = opts||{};
+  const h = o.h!==undefined ? o.h : g.h;
+  const alt = g.alt || fallbackAlt || "";
+  const img = `<img class="logo${g.white?" white":""}${o.cls?" "+o.cls:""}"`
+    + ` src="${g.src}" alt="${alt}"`
+    + (h?` style="height:${h}px"`:"")
+    + ` loading="lazy" decoding="async">`;
+  // when linked, the <a> carries the label and the <img> alt goes empty so
+  // screen readers announce the destination once rather than twice
+  return g.link
+    ? `<a class="logolink" href="${g.link}" target="_blank" rel="noopener"`
+      + ` aria-label="${alt||"Website"}">`
+      + img.replace(`alt="${alt}"`,'alt=""') + `</a>`
+    : img;
+}
+
 function popupHTML(s){
   return `<div class="pc">
+    ${logoHTML(s.logo, s.name, {h:19})}
     <p class="pc-eyebrow">${s.tag||""}</p>
     <h4>${s.title}</h4>
     ${s.pop?`<p>${s.pop}</p>`:""}
@@ -800,6 +866,19 @@ function detailHTML(s,i){
   return out;
 }
 
+/* A logo that fails to load removes itself, along with its link wrapper if it
+   has one, rather than leaving alt text sitting in the layout. `error` does not
+   bubble, so this listens in the capture phase — which also catches logos
+   inside map popups, whose markup is only built when the popup first opens.
+   The organisation name is still in the heading and the meta line, and the
+   aria-label on the link is announced before removal. */
+document.addEventListener("error", e=>{
+  const im=e.target;
+  if(!(im instanceof HTMLImageElement) || !im.classList.contains("logo")) return;
+  console.warn("[geo-cv] logo failed to load:", im.src);
+  (im.closest(".logolink") || im).remove();
+}, true);
+
 STORY.forEach((s,i)=>{
   if(s.type==="intro"){
     const el=document.createElement("section");
@@ -810,11 +889,17 @@ STORY.forEach((s,i)=>{
   }
   const el=document.createElement("section");
   el.className="chapter"; el.dataset.idx=i;
-  let html=`<p class="tag"><span class="num">0${i}</span> ${s.tag}</p><h2>${s.title}</h2>`;
+  let html=`<p class="tag"><span class="num">${String(i).padStart(2,"0")}</span> ${s.tag}</p>`
+    + `<h2>${s.title}</h2>`;
   if(s.body)    html+=`<p>${s.body}</p>`;
   if(s.stack)   html+=`<div class="stack">${s.stack.map(t=>`<span>${t}</span>`).join("")}</div>`;
   if(s.contact) html+=`<div class="contact">${s.contact.map(c=>`<span>${c[0]} ▸</span> ${c[1]}`).join("")}</div>`;
-  if(s.meta)    html+=`<p class="meta">${s.meta}</p>`;
+  // logo shares the meta line; either may be absent
+  const logoMark = logoHTML(s.logo, s.name);
+  if(logoMark || s.meta){
+    html+=`<div class="metarow">${logoMark}`
+      + (s.meta?`<p class="meta">${s.meta}</p>`:"") + `</div>`;
+  }
   if(s.note)    html+=`<span class="edit">${s.note}</span>`;
 
   const extra=detailHTML(s,i);
@@ -830,6 +915,7 @@ STORY.forEach((s,i)=>{
 
   el.innerHTML=html;
   narrative.appendChild(el);
+
 
   const btn=el.querySelector(".more-btn");
   if(btn){
