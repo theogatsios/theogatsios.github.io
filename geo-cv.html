@@ -365,6 +365,13 @@ const STORY = [
           link:"https://geology.upatras.gr/en/", white:false, h:110},
     //meta:`<b><a href="https://geology.upatras.gr/en/" target="_blank" rel="noopener">University of Patras</a></b>`,
     pop:`Earth processes, structural geology and field mapping.`,
+    thesis:{
+      title:"Passive Seismic Tomography in Delvina region using microseismic data",
+      //body:"",
+      //layer:{},
+      //legend:{}
+
+    },
     details:[
       ["Coursework","Structural geology · mineralogy & petrology · stratigraphy · hydrogeology · engineering geology"],
       ["Field work","Geological mapping campaigns across the Peloponnese and western Greece"],
@@ -394,7 +401,7 @@ const STORY = [
     //meta:`<b><a href="https://en.geol.uoa.gr/" target="_blank" rel="noopener">National and Kapodistrian University of Athens</a></b>`,
     pop:`Geophysical methods and signal interpretation — the bridge into remote sensing.`,
     thesis:{
-      title:"Multi-Temporal SAR Interferometry on the Argos basin",
+      title:"Multi-Temporal SAR Interferometry on Argos basin",
       body:`Ground-deformation time series built from stacked Sentinel-1 acquisitions,
             used to characterise subsidence patterns across the basin.`,
       layer:{type:"geojson", data:ARGOS_AOI, color:"#5fd0d8"},
@@ -405,10 +412,12 @@ const STORY = [
     ] },
 
   { tag:"Research · 5 yrs", name:"MT-InSAR", title:"Remote Sensing &amp; Multi-Temporal InSAR",
-    coords:[37.9612647,23.7082419], zoom:10.5, marker:true,
+    coords:[37.9612647,23.7082419], zoom:12.5, marker:true,
     body:`Five years measuring millimetre-scale ground deformation from satellite
           radar — persistent &amp; distributed scatterer interferometry over volcanic,
           tectonic and subsidence-prone terrain.`,
+    logo:{src:"logos/logo-HUA.png", alt:"HUA EO team",
+          link:"https://geo.hua.gr/", white:false, h:130},
     //meta:`<b>Study area shown — Santorini</b>`,
     pop:`mm-scale ground deformation from satellite radar (PS/DS InSAR).`,
     details:[
@@ -427,13 +436,13 @@ const STORY = [
               processing, shipped with a synthetic demo dataset.` }
     ] },
 
-  { tag:"Now", name:"GET — ATHENS", title:"GIS &amp; Remote Sensing Engineer at GET",
+  { tag:"Now", name:"GETMAP", title:"GIS &amp; Remote Sensing Engineer at GET",
     coords:[37.9446111,23.6791036], zoom:12.5, marker:true,
     body:`At Geospatial Enabling Technologies, building spatial data infrastructure
-          and the tooling around it — and currently learning photogrammetry.
-          <a href="https://www.getmap.eu" target="_blank" rel="noopener">getmap.gr</a>`,
-    meta:`<b>Athens</b>`,
+          and the tooling around it — and currently learning photogrammetry.</a>`,
     pop:`Building spatial data infrastructure & internal tooling. Now learning photogrammetry.`,
+    logo:{src:"logos/get.png", alt:"Geospatial Enabling Technologies",
+          link:"www.getmap.eu", white:false, h:100},
     moreLabel:"Projects",
     projects:[
       { name:"Municipal spatial data infrastructure",
