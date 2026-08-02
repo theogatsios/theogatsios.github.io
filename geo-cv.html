@@ -434,7 +434,7 @@ const STORY = [
     },
     projectsLabel:"Field work",
     projects:[
-      { name:"Vari, Syros \u2014 3D geological model", when:"Field mapping",
+      { name:"Vari, Syros \u2014 3D geological model", when:"2013",
         body:`A seven-day field campaign on the southeast coast of Syros, mapping 1.45 by 1.41 km of the Cycladic Blueschist unit at 1:5 000 as one of a group of five. Six lithologies were separated — marble, glaucophane and mica schist, toffitic schist, quartzite and Quaternary alluvial fans — and worked up into two cross-sections, a tectonostratigraphic column and Schmidt stereonets for foliation, lineation and fault planes.`,
         // Rebuilt natively from the Qgis2threejs scene rather than iframed:
         // the draped basemap as an image source, the contours as vectors, and
@@ -465,8 +465,9 @@ const STORY = [
             ["#392E13","Quartzite"]            // \u03c7\u03b1\u03bb\u03b1\u03b6\u03af\u03c4\u03b5\u03c2
           ]},
           {label:"Topography", items:[["#e2e2e2","Contours, 5 m"]]}
-        ], note:"Mapped at 1:5 000 \u00b7 EPSG:2100"},
+        ], note:"Mapped at 1:5.000 \u00b7 EPSG:2100"},
         
+        status:"Team 7 \u2014 Mariza, Nafsika, Ioanna, Giorgos, Triantafyllos, Thodoris",
         scene:{url:"Syros/Vari.html", title:"Vari, Syros \u2014 Team 7",
                label:"3D Scene"} }
     ],
@@ -750,6 +751,10 @@ function whenReady(fn){ styleReady ? fn() : map.once("load", fn); }
      xyz     : pre-rendered tile pyramid, e.g. gdal2tiles output.
      image   : static PNG/JPG pinned to four corner coordinates.
 
+   status -> the line shown under a project once its data has loaded.
+   Defaults to "on the map"; set it per project to say something specific, e.g.
+   status:"3D model ready" or status:"111 contours, 5 m interval".
+
    Motion per project: speed:0.8 (or duration:2200) for the automatic framing;
    the same keys inside `camera` for an explicit one. speed makes it fly,
    duration makes it ease — see FLIGHT at the top of the script.
@@ -964,7 +969,7 @@ function loadData(p,key,btn,host){
         if(bb&&!auto) auto=bb;
       }
       if(live.key!==key) return;                  // scrolled away mid-load
-      st.textContent = p.scene ? "on the map \u2014 3D model ready" : "on the map";
+      st.textContent = p.status || "on the map";
       setLegend(p.legend||null);
       if(p.scene) showSceneLaunch(p.scene);
       if(p.probe){ probeSpec=p.probe; hudProbe.hidden=false; hudProbe.textContent=`${p.probe.label||"value"} —`; }
