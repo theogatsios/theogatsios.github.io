@@ -229,7 +229,7 @@
   @keyframes blink{0%,100%{opacity:.25}50%{opacity:1}}
 
   /* ---------- LEGEND ---------- */
-  .legend{position:absolute;left:18px;top:18px;z-index:5;min-width:132px;max-width:196px;
+  .legend{position:absolute;left:18px;top:18px;z-index:5;min-width:132px;max-width:214px;
     font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--text-dim);
     background:rgba(10,15,22,.72);backdrop-filter:blur(6px);border:1px solid var(--line);
     border-radius:6px;padding:10px 12px 11px;pointer-events:none;letter-spacing:.02em}
@@ -237,7 +237,12 @@
     letter-spacing:.18em;text-transform:uppercase;color:var(--gold-soft);font-weight:500}
   .legend .bar{height:7px;border-radius:2px;margin-bottom:5px}
   .legend .ends{display:flex;justify-content:space-between;color:#6b7b8f}
-  .legend .sw{display:flex;align-items:center;gap:8px;margin-top:5px}
+  .legend .lgroup+.lgroup{margin-top:11px}
+  .legend .glab{margin:0 0 6px;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--gold-soft);font-weight:500;opacity:.9}
+  .legend .lnote{margin-top:9px;padding-top:8px;border-top:1px solid var(--line);
+    color:#5a6a7d;font-size:9.5px;line-height:1.45;letter-spacing:0}
+  .legend .sw{display:flex;align-items:flex-start;gap:8px;margin-top:5px;line-height:1.35}
   .legend .sw i{width:11px;height:11px;border-radius:2px;flex:0 0 auto;
     box-shadow:inset 0 0 0 1px rgba(255,255,255,.09)}
   .hud .probe{color:var(--cyan)}
@@ -278,7 +283,10 @@
     .scene-bar{padding:7px 10px;font-size:10px}
   }
   @media (max-width:900px){
-    .legend{left:12px;top:12px;font-size:10px;padding:8px 10px 9px;min-width:112px}
+    .legend{left:12px;top:12px;font-size:9.5px;padding:8px 10px 9px;min-width:112px;
+      max-width:170px}
+    .legend .sw{gap:6px;margin-top:4px}
+    .legend .sw i{width:9px;height:9px}
   }
 
   .drows{margin:0;display:grid;grid-template-columns:minmax(84px,auto) 1fr;gap:9px 20px}
@@ -340,6 +348,8 @@
    to MapLibre's [lng, lat] internally, so just edit naturally.
    marker:true  -> drops a clickable gold pin that opens a popup.
    pop          -> short text shown inside the popup (falls back to nothing).
+   speed        -> velocity for the flight into this chapter (see FLIGHT).
+   duration     -> ms for that flight instead; overrides speed.
    logo         -> "url" or {src, alt?, h?, white?, link?}. Renders on the meta
                    line and again inside the map popup. white:true forces a
                    white silhouette; link makes it clickable. Put logos here,
@@ -425,9 +435,7 @@ const STORY = [
     projectsLabel:"Field work",
     projects:[
       { name:"Vari, Syros \u2014 3D geological model", when:"Field mapping",
-        body:`Field mapping on Syros built into an interactive 3D scene: terrain
-              model, draped basemap and contour lines, exported from QGIS with
-              Qgis2threejs. Roughly 1.45 by 1.41 km, modelled in EPSG:2100.`,
+        body:`A seven-day field campaign on the southeast coast of Syros, mapping 1.45 by 1.41 km of the Cycladic Blueschist unit at 1:5 000 as one of a group of five. Six lithologies were separated — marble, glaucophane and mica schist, toffitic schist, quartzite and Quaternary alluvial fans — and worked up into two cross-sections, a tectonostratigraphic column and Schmidt stereonets for foliation, lineation and fault planes.`,
         // Rebuilt natively from the Qgis2threejs scene rather than iframed:
         // the draped basemap as an image source, the contours as vectors, and
         // the DEM as MapLibre terrain. All three came out of Syros/data/Vari/scene.js.
@@ -435,19 +443,32 @@ const STORY = [
           { type:"image", url:"Syros/vari_basemap.png",
             coordinates:[[24.933667, 37.397627], [24.95009, 37.397497], [24.94993, 37.384791], [24.93351, 37.384921]] },
           { type:"geojson", data:"Syros/vari_contours.geojson", fit:true,
-            color:"#f0d9a8",
+            color:"#e2e2e2",///"#f0d9a8",
             paint:{ line:{
               // index contours every 25 m read heavier than the 5 m intermediates
               "line-width":["case",["==",["%",["get","elev"],25],0],1.7,0.7],
               "line-opacity":["case",["==",["%",["get","elev"],25],0],.95,.5]
             }}},
-          { type:"dem", url:"Syros/vari_dem_cog.tif", terrain:false, exaggeration:1.0 }
+          ///{ type:"dem", url:"Syros/vari_dem.tif", hillshade:true, terrain:false, exaggeration:10 }
         ],
-        camera:{center:[24.941799,37.391209], zoom:15, pitch:45, bearing:0},
-        legend:{title:"Vari, Syros", items:[["#f0d9a8","Contours, 5 m"],
-                ["#8a97a8","Terrain \u00d71.8"]]},
-        scene:{url:"Syros/Vari.html", title:"Vari, Syros \u2014 original export",
-               label:"Original QGIS export"} }
+        camera:{center:[24.941799,37.391209], zoom:15, pitch:0, bearing:0, speed:2.5},
+        /* Formations and colours read out of Syros/Legend.png, the legend
+           Qgis2threejs exported alongside the scene, so the swatches match
+           the drape exactly. */
+        legend:{title:"Vari, Syros", groups:[
+          {label:"Formations", items:[
+            ["#6938A1","Alluvial fans"],       // \u03b1\u03bb\u03bb\u03bf\u03c5\u03b2\u03b9\u03b1\u03ba\u03ac \u03c1\u03b9\u03c0\u03af\u03b4\u03b9\u03b1
+            ["#AC0B0E","Marble"],              // \u03bc\u03ac\u03c1\u03bc\u03b1\u03c1\u03b1
+            ["#3082E5","Blueschist"],          // \u03b3\u03bb\u03b1\u03c5\u03ba\u03bf\u03c6\u03b1\u03bd\u03b9\u03c4\u03b9\u03ba\u03cc\u03c2 \u03c3\u03c7\u03b9\u03c3\u03c4\u03cc\u03bb\u03b9\u03b8\u03bf\u03c2
+            ["#3D8E4C","Mica schist"],         // \u03bc\u03b1\u03c1\u03bc\u03b1\u03c1\u03c5\u03b3\u03b9\u03b1\u03ba\u03cc\u03c2 \u03c3\u03c7\u03b9\u03c3\u03c4\u03cc\u03bb\u03b9\u03b8\u03bf\u03c2
+            ["#AF874C","Toffitic schist"],   // \u03c4\u03bf\u03c6\u03c6\u03b9\u03c4\u03b9\u03ba\u03cc\u03c2 \u03c3\u03c7\u03b9\u03c3\u03c4\u03cc\u03bb\u03b9\u03b8\u03bf\u03c2
+            ["#392E13","Quartzite"]            // \u03c7\u03b1\u03bb\u03b1\u03b6\u03af\u03c4\u03b5\u03c2
+          ]},
+          {label:"Topography", items:[["#e2e2e2","Contours, 5 m"]]}
+        ], note:"Mapped at 1:5 000 \u00b7 EPSG:2100"},
+        
+        scene:{url:"Syros/Vari.html", title:"Vari, Syros \u2014 Team 7",
+               label:"3D Scene"} }
     ],
     details:[
       ["Coursework","Structural geology · mineralogy & petrology · stratigraphy · hydrogeology · engineering geology"],
@@ -616,6 +637,63 @@ const PIN_MODE = "dim";
    ------------------------------------------------------------------------ */
 const PANELS_OPEN = true;
 
+/* ---------- CAMERA SPEED -------------------------------------------------
+   mode decides what happens between chapters:
+
+     "duration"  every flight takes the same time, so the hop to the next
+                 suburb and the hop to the Canaries both take FLIGHT.duration.
+                 Predictable, but long jumps feel rushed.
+     "speed"     the time comes from the distance, so the camera moves at a
+                 roughly constant velocity — short hops are quick, long ones
+                 take longer, capped at maxDuration.
+
+   speed is in MapLibre's "zoom levels per second" terms; 1.2 is its default
+   and lower is slower. curve is how far the camera pulls back on the way:
+   raise it for a bigger arc, 1 for a flat path.
+
+   Any chapter can override with `speed:` or `duration:`; a duration always
+   wins, because MapLibre ignores speed when a duration is given.
+   ------------------------------------------------------------------------ */
+const FLIGHT = {
+  mode:        "duration",
+  duration:    1500,   // ms per flight            (mode "duration")
+  speed:        1.2,   // velocity instead of time (mode "speed")
+  maxDuration: 4500,   // ms ceiling on long flights
+  curve:       1.42,   // arc of the flight path
+  frame:       1400,   // ms, framing a dataset once it loads
+  camera:      1800,   // ms, moving to a project's explicit camera
+  reset:        700    // ms, returning pitch and bearing to flat
+};
+
+/* Readers whose OS asks for less motion get instant cuts. The chapter flight
+   used to pass essential:true, which explicitly overrode that preference. */
+const LESS_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)");
+const still = o => LESS_MOTION.matches ? Object.assign({}, o, {duration:0}) : o;
+
+/* Motion for a project's camera move. speed, curve and maxDuration exist only
+   on flyTo, so anything asking for speed has to fly; a plain duration still
+   eases, which stops short moves from swooping out and back in. `src` is either
+   the project itself (automatic framing) or its `camera` object. */
+function projectMotion(src, fallback){
+  // duration always wins, exactly as it does for chapters, and as MapLibre
+  // itself decides: flyTo ignores speed whenever a duration is given
+  if(src.duration!==undefined) return {fly:false, opts:{duration:src.duration}};
+  const speed = src.speed ?? (FLIGHT.mode==="speed" ? FLIGHT.speed : undefined);
+  if(speed!==undefined) return {fly:true, opts:{
+    speed, curve:src.curve ?? FLIGHT.curve,
+    maxDuration:src.maxDuration ?? FLIGHT.maxDuration }};
+  return {fly:false, opts:{duration:fallback}};
+}
+
+function flightOpts(s){
+  const curve = s.curve ?? FLIGHT.curve;
+  if(s.duration!==undefined)                              // explicit time wins
+    return {duration:s.duration, curve};
+  if(s.speed!==undefined || FLIGHT.mode==="speed")         // velocity-based
+    return {speed:s.speed ?? FLIGHT.speed, maxDuration:FLIGHT.maxDuration, curve};
+  return {duration:FLIGHT.duration, curve};
+}
+
 /* ---------- BASEMAP -----------------------------------------------------
    OpenFreeMap "Positron" — light vector basemap (free, no API key).
    Vector tiles are tiny and zoom continuously, so camera flights stay smooth
@@ -662,10 +740,19 @@ function whenReady(fn){ styleReady ? fn() : map.once("load", fn); }
                GeoServer WFS for srsName=EPSG:4326.
      cog     : Cloud Optimized GeoTIFF, must be EPSG:3857. Optional
                `colorRamp:"BrewerRdYlGn9,-0.2,0.8,c"` for single-band data.
-     dem     : single-band COG rendered as hillshade.
+     dem     : single-band COG as terrain and/or hillshade.
+               terrain:true      3D relief
+               hillshade:true    shading (works alongside terrain)
+               hillshade:false   never shade
+               shade:.6          shading strength
+               sun:335           illumination direction in degrees
      wms     : GeoServer (or any) WMS. url + layers, reprojected server-side.
      xyz     : pre-rendered tile pyramid, e.g. gdal2tiles output.
      image   : static PNG/JPG pinned to four corner coordinates.
+
+   Motion per project: speed:0.8 (or duration:2200) for the automatic framing;
+   the same keys inside `camera` for an explicit one. speed makes it fly,
+   duration makes it ease — see FLIGHT at the top of the script.
 
    Optional per project: camera:{center?,zoom?,pitch?,bearing?} for a tilted
    view (terrain needs one — relief is invisible from straight overhead),
@@ -744,7 +831,7 @@ function clearData(){
   live.btn=null; live.host=null; live.key=null;
   clearScene();
   if(map.getPitch()||map.getBearing())
-    map.easeTo({pitch:0,bearing:0,duration:700});
+    map.easeTo(still({pitch:0,bearing:0,duration:FLIGHT.reset}));
   setLegend(null);
   probeSpec=null; hudProbe.hidden=true;
 }
@@ -792,10 +879,31 @@ async function addSpec(spec,i,key){
     await ensureCOG();
     map.addSource(sid,{type:"raster-dem",url:`cog://${spec.url}#dem`,tileSize:256});
     live.sources.push(sid);
-    if(spec.terrain){ map.setTerrain({source:sid,exaggeration:spec.exaggeration||1.2}); live.terrain=true; }
-    else{
+    if(spec.terrain){
+      map.setTerrain({source:sid,exaggeration:spec.exaggeration||1.2});
+      live.terrain=true;
+    }
+    /* hillshade is a tri-state:
+         true      shade, with or without terrain
+         false     never shade — use this when a draped image already carries
+                   the relief, otherwise the shading is drawn over the top of it
+         omitted   shade only when there is no terrain (the original default)
+
+       Strength comes from `shade`. With terrain off, `exaggeration` still means
+       the shading strength, as it always did. Draw order follows the order of
+       the `layers` array, so put the dem spec BEFORE an image spec to shade
+       underneath it, or after to shade over it. */
+    const doShade = spec.hillshade ?? !spec.terrain;
+    if(doShade){
+      const strength = spec.shade ?? (spec.terrain ? .6 : (spec.exaggeration ?? .55));
       map.addLayer({id:base,type:"hillshade",source:sid,
-        paint:{"hillshade-exaggeration":spec.exaggeration||.55}});
+        paint:Object.assign({
+          "hillshade-exaggeration":strength,
+          "hillshade-shadow-color":spec.shadow||"#050a12",
+          "hillshade-highlight-color":spec.highlight||"#e8b15e",
+          "hillshade-accent-color":spec.accent||"#1b2634",
+          "hillshade-illumination-direction":spec.sun??335
+        }, (spec.paint||{}).hillshade||{})});
       live.layers.push(base);
     }
     return null;
@@ -866,12 +974,22 @@ function loadData(p,key,btn,host){
         const centre=c.center || (box
           ? [(box[0][0]+box[1][0])/2, (box[0][1]+box[1][1])/2]
           : map.getCenter());
-        map.easeTo({center:centre, zoom:c.zoom??15, pitch:c.pitch??60,
-                    bearing:c.bearing??0, duration:c.duration??1800});
+        const mv=projectMotion(c, FLIGHT.camera);
+        const target={center:centre, zoom:c.zoom??15,
+                      pitch:c.pitch??60, bearing:c.bearing??0};
+        map[mv.fly?"flyTo":"easeTo"](still(Object.assign(target, mv.opts)));
       }else{
         const box=p.bounds||auto;
-        if(box) map.fitBounds(box,{padding:{top:70,bottom:70,left:60,right:60},
-          duration:1400,maxZoom:p.maxZoom||16});
+        if(box){
+          const pad={top:70,bottom:70,left:60,right:60}, mz=p.maxZoom||16;
+          const mv=projectMotion(p, FLIGHT.frame);
+          // fitBounds has no speed option, so derive the camera the bounds
+          // imply and fly to it instead
+          const cam = mv.fly ? map.cameraForBounds(box,{padding:pad,maxZoom:mz}) : null;
+          if(cam) map.flyTo(still(Object.assign({}, cam, mv.opts)));
+          else    map.fitBounds(box, still(Object.assign({padding:pad,maxZoom:mz},
+                    mv.fly?{duration:FLIGHT.frame}:mv.opts)));
+        }
       }
     }catch(err){
       if(live.key!==key) return;
@@ -931,9 +1049,13 @@ function setLegend(cfg){
     h+=`<div class="bar" style="background:linear-gradient(90deg,${cfg.ramp.join(",")})"></div>
         <div class="ends"><span>${cfg.min??""}</span><span>${cfg.max??""}</span></div>`;
   }
-  if(cfg.items){
-    h+=cfg.items.map(it=>`<div class="sw"><i style="background:${it[0]}"></i><span>${it[1]}</span></div>`).join("");
-  }
+  const swatches = list => list.map(it =>
+    `<div class="sw"><i style="background:${it[0]}"></i><span>${it[1]}</span></div>`).join("");
+  if(cfg.items) h+=swatches(cfg.items);
+  // `groups` keeps a long legend readable: [{label, items:[[colour,text],...]}]
+  if(cfg.groups) h+=cfg.groups.map(g =>
+    `<div class="lgroup">${g.label?`<p class="glab">${g.label}</p>`:""}${swatches(g.items||[])}</div>`).join("");
+  if(cfg.note) h+=`<div class="lnote">${cfg.note}</div>`;
   legendBox.innerHTML=h; legendBox.hidden=false;
 }
 
@@ -1174,7 +1296,7 @@ function activate(idx){
   clearData();                     // leaving a chapter takes its data off the map
   Object.values(popups).forEach(p=>{ if(p.isOpen()) p.remove(); });
   setPins(idx);
-  map.flyTo({center:LL(s.coords), zoom:s.zoom, duration:1500, curve:1.42, essential:true});
+  map.flyTo(still(Object.assign(flightOpts(s), {center:LL(s.coords), zoom:s.zoom})));
   hudName.textContent=s.name||"";
   hudCoords.innerHTML=`${s.coords[0].toFixed(4)}° N&nbsp;&nbsp;${s.coords[1].toFixed(4)}° E`;
 }
@@ -1248,9 +1370,14 @@ setPins(0);   // paint the initial pin state before the observer fires
      layer:{ type:"image", url:"./data/lst_clip.png",
              coordinates:[[23.78,38.05],[23.83,38.05],[23.83,38.00],[23.78,38.00]] }
 
-   -- Hillshade or 3D terrain from a single-band COG ------------------------
-     layer:{ type:"dem", url:"https://theogat.com/data/dem_cog.tif", exaggeration:.6 }
+   -- Hillshade and/or 3D terrain from a single-band COG --------------------
+     layer:{ type:"dem", url:"https://theogat.com/data/dem_cog.tif", shade:.6 }
      layer:{ type:"dem", url:"...", terrain:true, exaggeration:1.3 }
+     layer:{ type:"dem", url:"...", terrain:true, hillshade:true, shade:.5 }
+     layer:{ type:"dem", url:"...", hillshade:false }        // source only
+     // colours default to the page palette; override any of them:
+     layer:{ type:"dem", url:"...", hillshade:true, shade:.7,
+             highlight:"#e8b15e", shadow:"#050a12", accent:"#1b2634", sun:315 }
 
    -- Several layers on one click -------------------------------------------
      layers:[
