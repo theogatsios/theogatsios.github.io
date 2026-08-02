@@ -241,6 +241,42 @@
   .legend .sw i{width:11px;height:11px;border-radius:2px;flex:0 0 auto;
     box-shadow:inset 0 0 0 1px rgba(255,255,255,.09)}
   .hud .probe{color:var(--cyan)}
+
+  /* ---------- 3D SCENE OVERLAY ----------
+     A Qgis2threejs export is a whole standalone page, so it is mounted in an
+     iframe over the map pane rather than rebuilt as MapLibre layers. It only
+     loads when the reader asks for it — three.js plus a DEM is not something
+     to download on page load. */
+  .scene-launch{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:6;
+    display:inline-flex;align-items:center;gap:9px;cursor:pointer;
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--gold);background:rgba(10,15,22,.84);
+    backdrop-filter:blur(6px);border:1px solid var(--gold-soft);border-radius:6px;
+    padding:9px 15px;box-shadow:0 6px 22px rgba(0,0,0,.45);
+    transition:background .2s,color .2s,box-shadow .2s}
+  .scene-launch:hover{background:var(--gold);color:#0a0f16;
+    box-shadow:0 0 22px rgba(232,177,94,.38)}
+  .scene-launch:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+  .scene-launch .cube{font-size:13px;line-height:1}
+
+  .scene-frame{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;
+    background:#0a0f16;animation:sceneIn .3s ease}
+  @keyframes sceneIn{from{opacity:0}to{opacity:1}}
+  .scene-bar{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:9px 13px;
+    border-bottom:1px solid var(--line);background:rgba(10,15,22,.96);
+    font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--text-dim);
+    letter-spacing:.05em}
+  .scene-bar .st{color:var(--gold-soft);text-transform:uppercase;letter-spacing:.18em;font-size:10px}
+  .scene-bar .sp{margin-left:auto;display:flex;gap:15px;align-items:center}
+  .scene-bar button{background:transparent;border:0;color:var(--text-dim);cursor:pointer;
+    font:inherit;padding:3px 7px;border-radius:4px;transition:color .2s}
+  .scene-bar button:hover{color:var(--gold)}
+  .scene-bar button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  .scene-frame iframe{flex:1 1 auto;width:100%;border:0;background:#0a0f16}
+  @media (max-width:900px){
+    .scene-launch{bottom:14px;font-size:10px;padding:7px 12px}
+    .scene-bar{padding:7px 10px;font-size:10px}
+  }
   @media (max-width:900px){
     .legend{left:12px;top:12px;font-size:10px;padding:8px 10px 9px;min-width:112px}
   }
@@ -313,7 +349,9 @@
    EXPANDABLE PANEL — any of these three keys adds a toggle under the chapter.
    Omit them all and no toggle appears.
      thesis   -> {title, body?, link?}
-     projects -> [{name, body?, when?, link?}, ...]
+     projects -> [{name, body?, when?, link?, layer?, scene?}, ...]
+                 scene:{url,title?,label?} mounts a standalone 3D page (e.g. a
+                 Qgis2threejs export) in an iframe over the map, on demand.
      details  -> [["Label","value (HTML allowed)"], ...]
      moreLabel / projectsLabel -> override the button / list headings.
      open     -> true/false to force this chapter's panel state, overriding
@@ -347,6 +385,16 @@ const ARGOS_AOI={type:"FeatureCollection",features:[{
     [22.66,37.55],[22.83,37.55],[22.83,37.71],[22.66,37.71],[22.66,37.55]
   ]]}}]};
 
+/* Vari, Syros — the footprint of the Qgis2threejs scene in Syros/Vari.html.
+   Taken from that scene's own baseExtent (centre 583218.14, 4138399.77 in
+   EPSG:2100; 1454 x 1410 m) and reprojected to WGS84 for MapLibre. */
+const VARI_FOOTPRINT={type:"FeatureCollection",features:[{
+  type:"Feature",properties:{name:"Vari, Syros \u2014 mapped area"},
+  geometry:{type:"Polygon",coordinates:[[
+    [24.93351,37.38492],[24.94993,37.38479],
+    [24.95009,37.39750],[24.93367,37.39763],[24.93351,37.38492]
+  ]]}}]};
+
 const STORY = [
   { type:"intro", label:"Geospatial CV",
     h1:'Theo <span class="em">Gatsios</span>',
@@ -374,6 +422,33 @@ const STORY = [
       //legend:{}
 
     },
+    projectsLabel:"Field work",
+    projects:[
+      { name:"Vari, Syros \u2014 3D geological model", when:"Field mapping",
+        body:`Field mapping on Syros built into an interactive 3D scene: terrain
+              model, draped basemap and contour lines, exported from QGIS with
+              Qgis2threejs. Roughly 1.45 by 1.41 km, modelled in EPSG:2100.`,
+        // Rebuilt natively from the Qgis2threejs scene rather than iframed:
+        // the draped basemap as an image source, the contours as vectors, and
+        // the DEM as MapLibre terrain. All three came out of Syros/data/Vari/scene.js.
+        layers:[
+          { type:"image", url:"Syros/vari_basemap.png",
+            coordinates:[[24.933667, 37.397627], [24.95009, 37.397497], [24.94993, 37.384791], [24.93351, 37.384921]] },
+          { type:"geojson", data:"Syros/vari_contours.geojson", fit:true,
+            color:"#f0d9a8",
+            paint:{ line:{
+              // index contours every 25 m read heavier than the 5 m intermediates
+              "line-width":["case",["==",["%",["get","elev"],25],0],1.7,0.7],
+              "line-opacity":["case",["==",["%",["get","elev"],25],0],.95,.5]
+            }}},
+          { type:"dem", url:"Syros/vari_dem_cog.tif", terrain:false, exaggeration:1.0 }
+        ],
+        camera:{center:[24.941799,37.391209], zoom:15, pitch:45, bearing:0},
+        legend:{title:"Vari, Syros", items:[["#f0d9a8","Contours, 5 m"],
+                ["#8a97a8","Terrain \u00d71.8"]]},
+        scene:{url:"Syros/Vari.html", title:"Vari, Syros \u2014 original export",
+               label:"Original QGIS export"} }
+    ],
     details:[
       ["Coursework","Structural geology · mineralogy & petrology · stratigraphy · hydrogeology · engineering geology"],
       ["Field work","Geological mapping campaigns across the Peloponnese and western Greece"],
@@ -558,8 +633,9 @@ const map = new maplibregl.Map({
 });
 map.addControl(new maplibregl.NavigationControl({showCompass:false}), "bottom-right");
 map.scrollZoom.enable();           // cursor over map → wheel zooms (and won't scroll the page)
-map.dragRotate.disable();
-map.touchZoomRotate.disableRotation();
+/* Rotation stays enabled so terrain can be orbited. The 2D chapters still
+   open flat, because clearData() returns pitch and bearing to zero whenever a
+   dataset is dismissed or the chapter changes. */
 let styleReady=false;
 map.on("load", ()=>{
   // remove every text/label layer so only the pins carry context
@@ -591,7 +667,9 @@ function whenReady(fn){ styleReady ? fn() : map.once("load", fn); }
      xyz     : pre-rendered tile pyramid, e.g. gdal2tiles output.
      image   : static PNG/JPG pinned to four corner coordinates.
 
-   Optional per project: bounds:[[w,s],[e,n]] to frame the data,
+   Optional per project: camera:{center?,zoom?,pitch?,bearing?} for a tilted
+   view (terrain needs one — relief is invisible from straight overhead),
+   bounds:[[w,s],[e,n]] to frame the data,
    legend:{...} for the map legend, probe:{...} to read raster values on hover.
    ========================================================================= */
 
@@ -600,15 +678,24 @@ let cogLoading=null;
 function ensureCOG(){
   if(cogLoading) return cogLoading;
   cogLoading=new Promise((resolve,reject)=>{
-    const sc=document.createElement("script");
-    sc.src=COG_PLUGIN; sc.crossOrigin="anonymous";
-    sc.onload=()=>{
+    const register=()=>{
       try{ maplibregl.addProtocol("cog", MaplibreCOGProtocol.cogProtocol); resolve(); }
       catch(err){ reject(err); }
     };
-    sc.onerror=()=>reject(new Error("COG plugin failed to load"));
+    // already on the page? then it has been self-hosted via a <script> tag,
+    // which is worth doing if you would rather not depend on a CDN
+    if(window.MaplibreCOGProtocol) return register();
+    const sc=document.createElement("script");
+    sc.src=COG_PLUGIN; sc.crossOrigin="anonymous";
+    // without a timeout a blocked or slow CDN leaves the reader on "loading"
+    // for ever, because a stalled script fires neither load nor error
+    const bail=setTimeout(()=>reject(new Error("COG plugin timed out")),12000);
+    sc.onload=()=>{ clearTimeout(bail); register(); };
+    sc.onerror=()=>{ clearTimeout(bail); reject(new Error("COG plugin failed to load")); };
     document.head.appendChild(sc);
   });
+  // a failed attempt must not be cached, or a retry can never succeed
+  cogLoading.catch(()=>{ cogLoading=null; });
   return cogLoading;
 }
 
@@ -655,6 +742,9 @@ function clearData(){
     if(st){ st.textContent=""; st.classList.remove("err"); }
   }
   live.btn=null; live.host=null; live.key=null;
+  clearScene();
+  if(map.getPitch()||map.getBearing())
+    map.easeTo({pitch:0,bearing:0,duration:700});
   setLegend(null);
   probeSpec=null; hudProbe.hidden=true;
 }
@@ -757,7 +847,7 @@ function loadData(p,key,btn,host){
   st.classList.remove("err");
   st.innerHTML=`<span class="dot"></span>loading`;
 
-  const specs=p.layers||[p.layer];
+  const specs=p.layers || (p.layer?[p.layer]:[]);
   whenReady(async ()=>{
     try{
       let auto=null;
@@ -766,11 +856,23 @@ function loadData(p,key,btn,host){
         if(bb&&!auto) auto=bb;
       }
       if(live.key!==key) return;                  // scrolled away mid-load
-      st.textContent="on the map";
+      st.textContent = p.scene ? "on the map \u2014 3D model ready" : "on the map";
       setLegend(p.legend||null);
+      if(p.scene) showSceneLaunch(p.scene);
       if(p.probe){ probeSpec=p.probe; hudProbe.hidden=false; hudProbe.textContent=`${p.probe.label||"value"} —`; }
-      const box=p.bounds||auto;
-      if(box) map.fitBounds(box,{padding:{top:70,bottom:70,left:60,right:60},duration:1400,maxZoom:p.maxZoom||16});
+      if(p.camera){
+        // explicit camera: needed for terrain, where a flat fitBounds hides the relief
+        const c=p.camera, box=p.bounds||auto;
+        const centre=c.center || (box
+          ? [(box[0][0]+box[1][0])/2, (box[0][1]+box[1][1])/2]
+          : map.getCenter());
+        map.easeTo({center:centre, zoom:c.zoom??15, pitch:c.pitch??60,
+                    bearing:c.bearing??0, duration:c.duration??1800});
+      }else{
+        const box=p.bounds||auto;
+        if(box) map.fitBounds(box,{padding:{top:70,bottom:70,left:60,right:60},
+          duration:1400,maxZoom:p.maxZoom||16});
+      }
     }catch(err){
       if(live.key!==key) return;
       st.textContent=`could not load — ${err.message}`;
@@ -778,6 +880,47 @@ function loadData(p,key,btn,host){
       console.error("[geo-cv]",err);
     }
   });
+}
+
+/* ---- 3D scene overlay ----------------------------------------------------
+   A project gains a scene by adding:
+     scene:{ url:"Syros/Vari.html", title:"Vari, Syros", label:"Open the 3D model" }
+   The launch button appears over the map once the project's data is on it;
+   the iframe mounts only when that button is pressed. Both are torn down by
+   clearData(), so changing chapter removes them like any other layer. */
+const mapWrap=document.querySelector(".mapwrap");
+let sceneBtn=null, sceneFrame=null;
+
+function closeScene(){ if(sceneFrame){ sceneFrame.remove(); sceneFrame=null; } }
+function clearScene(){ closeScene(); if(sceneBtn){ sceneBtn.remove(); sceneBtn=null; } }
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeScene(); });
+
+function showSceneLaunch(sc){
+  const b=document.createElement("button");
+  b.type="button"; b.className="scene-launch";
+  b.innerHTML=`<span class="cube">◱</span><span>${sc.label||"Open the 3D model"}</span>`;
+  b.addEventListener("click",()=>openScene(sc));
+  mapWrap.appendChild(b);
+  sceneBtn=b;
+}
+
+function openScene(sc){
+  closeScene();
+  const wrap=document.createElement("div");
+  wrap.className="scene-frame";
+  wrap.innerHTML=`<div class="scene-bar">
+      <span class="st">3D scene</span><span>${sc.title||""}</span>
+      <span class="sp">
+        <a href="${sc.url}" target="_blank" rel="noopener">new tab &#8599;</a>
+        <button type="button" data-close aria-label="Close the 3D scene">&times; close</button>
+      </span>
+    </div>
+    <iframe src="${sc.url}" title="${sc.title||"3D scene"}"
+      allow="fullscreen" loading="lazy"></iframe>`;
+  wrap.querySelector("[data-close]").addEventListener("click",closeScene);
+  mapWrap.appendChild(wrap);
+  sceneFrame=wrap;
+  wrap.querySelector("[data-close]").focus();
 }
 
 /* ---- legend ---- */
@@ -884,7 +1027,7 @@ function detailHTML(s,i){
     out+=`<div class="dblock">
       <p class="dlabel">${s.projectsLabel||"Selected work"}</p>
       <ul class="plist">${s.projects.map((p,n)=>{
-        const hasData=!!(p.layer||p.layers);
+        const hasData=!!(p.layer||p.layers||p.scene);
         const when=p.when?`<span class="pwhen">${p.when}</span>`:"";
         const head = hasData
           ? `<button class="play" type="button" aria-pressed="false" data-p="${n}"
