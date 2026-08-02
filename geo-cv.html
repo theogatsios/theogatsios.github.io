@@ -316,6 +316,8 @@
      projects -> [{name, body?, when?, link?}, ...]
      details  -> [["Label","value (HTML allowed)"], ...]
      moreLabel / projectsLabel -> override the button / list headings.
+     open     -> true/false to force this chapter's panel state, overriding
+                 the PANELS_OPEN setting at the top of the script.
 
    A thesis OR a project entry becomes a clickable map layer by adding
    `layer` / `layers` (plus optional bounds, legend, probe). See LAYER ENGINE.
@@ -351,12 +353,12 @@ const STORY = [
     role:"GIS &amp; Remote Sensing Engineer — Athens, Greece",
     coords:[38.6,23.8], zoom:5.4, name:"GREECE" },
 
-  { tag:"Based in", name:"PALAIO FALIRO", title:"Athens, on the Saronic Gulf",
+  { tag:"Based in", name:"PALAIO FALIRO", title:"Athens, under the Acropolis",
     coords:[37.953034,23.704705], zoom:11.5, marker:true,
-    body:`Home base on the Athens coast. Everything here is editable — swap text,
-          coordinates and zoom in the <code>STORY</code> array at the top of this file.`,
+    body:`One of 3.6 million. I live in the shadow of the Parthenon and within reach of the Saronic Gulf, 
+    which is roughly the right balance between deep history and open water.`,
     meta:`<b>37.953° N, 23.800° E</b> · native grid EPSG:2100 (EGSA87)`,
-    pop:`Home base on the Athens coast — and the centre of the EGSA87 world.` },
+    pop:`Home base on the Athens coast — the centre of the EGSA87 world.` },
 
   { tag:"Education · I", name:"BSc GEOLOGY", title:"BSc in Geology",
     coords:[38.2919714,21.7897984], zoom:13.5, marker:true,
@@ -442,7 +444,7 @@ const STORY = [
           and the tooling around it — and currently learning photogrammetry.</a>`,
     pop:`Building spatial data infrastructure & internal tooling. Now learning photogrammetry.`,
     logo:{src:"logos/get.png", alt:"Geospatial Enabling Technologies",
-          link:"www.getmap.eu", white:false, h:100},
+          link:"https://www.getmap.eu/", white:false, h:100},
     moreLabel:"Projects",
     projects:[
       { name:"Municipal spatial data infrastructure",
@@ -527,6 +529,17 @@ const LL = c => [c[1], c[0]];   // [lat,lng] -> [lng,lat] for MapLibre
      "all"  every pin gold and clickable at all times
    ------------------------------------------------------------------------ */
 const PIN_MODE = "dim";
+
+/* ---------- PANELS -------------------------------------------------------
+   Whether the "Read more" panels start open:
+     true      open everywhere
+     false     closed everywhere, the reader opens what interests them
+     "desktop" open on wide screens, collapsed on narrow ones so a phone
+               is not handed the entire CV in one scroll
+   A single chapter can override this with `open:true` / `open:false`.
+   Evaluated once at build time, so resizing will not re-run it.
+   ------------------------------------------------------------------------ */
+const PANELS_OPEN = true;
 
 /* ---------- BASEMAP -----------------------------------------------------
    OpenFreeMap "Positron" — light vector basemap (free, no API key).
@@ -820,8 +833,12 @@ function logoHTML(logo, fallbackAlt, opts){
     + ` loading="lazy" decoding="async">`;
   // when linked, the <a> carries the label and the <img> alt goes empty so
   // screen readers announce the destination once rather than twice
+  // A link with no scheme is a RELATIVE path: "www.getmap.eu" would resolve
+  // against the page URL and 404. Normalise instead of failing silently.
+  const href = g.link && !/^(?:[a-z][a-z0-9+.-]*:|\/\/|\/|#)/i.test(g.link)
+    ? "https://"+g.link : g.link;
   return g.link
-    ? `<a class="logolink" href="${g.link}" target="_blank" rel="noopener"`
+    ? `<a class="logolink" href="${href}" target="_blank" rel="noopener"`
       + ` aria-label="${alt||"Website"}">`
       + img.replace(`alt="${alt}"`,'alt=""') + `</a>`
     : img;
@@ -931,11 +948,17 @@ STORY.forEach((s,i)=>{
   const extra=detailHTML(s,i);
   const openLabel=s.moreLabel||"Read more";
   if(extra){
+    // per-chapter `open` wins; otherwise fall back to the PANELS_OPEN setting
+    const startOpen = !!(s.open!==undefined ? s.open
+      : PANELS_OPEN==="desktop"
+        ? window.matchMedia("(min-width:900px)").matches
+        : PANELS_OPEN);
     html+=`<div class="more">
-      <button class="more-btn" type="button" aria-expanded="false" aria-controls="more-${i}">
-        <span class="chev">▶</span><span class="lbl">${openLabel}</span>
+      <button class="more-btn" type="button" aria-expanded="${startOpen}" aria-controls="more-${i}">
+        <span class="chev">▶</span><span class="lbl">${startOpen?"Close":openLabel}</span>
       </button>
-      <div class="more-panel" id="more-${i}"><div class="more-inner">${extra}</div></div>
+      <div class="more-panel${startOpen?" open":""}" id="more-${i}">
+        <div class="more-inner">${extra}</div></div>
     </div>`;
   }
 
