@@ -456,7 +456,7 @@ const STORY = [
 
   { tag:"Education · I", name:"BSc GEOLOGY", title:"BSc in Geology",
     coords:[38.2919714,21.7897984], zoom:13.5, marker:true,
-    body:`Foundations in earth processes, structural geology and field mapping.`,
+    body:`Four years at Patras, from mineralogy and stratigraphy through to structural geology and 27 days on the field. Mapping contacts by hand on Syros, then inverting arrival times for a velocity model in Delvino — the classical training, and the first taste of what would replace it.`,
     logo:{src:"logos/up_2017_logo_en.png", alt:"University of Patras",
           link:"https://geology.upatras.gr/en/", white:false, h:110},
     //meta:`<b><a href="https://geology.upatras.gr/en/" target="_blank" rel="noopener">University of Patras</a></b>`,
@@ -573,21 +573,48 @@ const STORY = [
 
   { tag:"Education · II", name:"MSc GEOPHYSICS", title:"MSc in Geophysics",
     coords:[37.9666322,23.7846110], zoom:12.5, marker:true,
-    body:`Specialisation in geophysical methods and signal interpretation —
-          the bridge into remote sensing.`,
+    body:`Two years in the Department of Geophysics and Geothermics, where potential
+          fields, seismics and electromagnetics are taught as one toolkit rather than
+          three subjects — and where the satellite first became just another instrument
+          in the chain.`,
     logo:{src:"logos/nkua.png", alt:"National and Kapodistrian University of Athens",
           link:"https://en.geol.uoa.gr/", white:false, h:90},
-    //meta:`<b><a href="https://en.geol.uoa.gr/" target="_blank" rel="noopener">National and Kapodistrian University of Athens</a></b>`,
     pop:`Geophysical methods and signal interpretation — the bridge into remote sensing.`,
+    moreLabel:"Coursework",
     thesis:{
       title:"Multi-Temporal SAR Interferometry on Argos basin",
       body:`Ground-deformation time series built from stacked Sentinel-1 acquisitions,
             used to characterise subsidence patterns across the basin.`,
       layer:{type:"geojson", data:ARGOS_AOI, color:"#5fd0d8"},
       legend:{title:"Thesis AOI", items:[["#5fd0d8","Argos basin footprint"]]} },
+    /* The three third-semester electives — one open, two specialisation — listed
+       in the order they matter rather than the order they were sat. Together they
+       are the whole trajectory: the near surface, the mathematics, the satellite. */
+    projectsLabel:"Electives",
+    projects:[
+      { name:"Space Applications in Geophysics",
+        body:`Earth-observation systems and image analysis across the spectrum, digital
+              elevation models from terrestrial and aerospace data, and ground deformation
+              measured by satellite geodesy and SAR interferometry — over tectonic and
+              volcanic zones as much as anthropogenic subsidence, with seismological and
+              satellite data combined into ground-motion models. Everything after this
+              followed from it.` },
+      { name:"Algorithms and Programming in Geophysics and Seismology",
+        body:`Fourier and wavelet transforms, filtering and the z-transform, tensor
+              analysis of stress and strain, linear and non-linear least squares, robust
+              fitting and inversion, interpolation and geostatistics, and finite
+              differences and finite elements for diffusion and wave propagation — each
+              of them written rather than described.` },
+      { name:"Environmental and Engineering Geophysics",
+        body:`High-resolution near-surface work with the shallow end of the toolkit:
+              fracture and cavity detection, buried objects, contamination plumes,
+              saltwater intrusion, water in landslide bodies and dam foundations,
+              bedrock contact mapping.` }
+    ],
     details:[
-      ["Methods","Seismology · potential fields · signal processing · inverse problems"],
-      ["Tools","MATLAB · Python · GMT"]
+      ["Core","Theory of Geophysical Fields and Surveying \u00b7 Acquisition and Analysis of Geophysical Data \u00b7 Applied Geophysics \u00b7 Special Topics in Seismology \u00b7 Geoinformatics and GIS \u00b7 Field Work and Mapping"],
+      ["Methods","Gravity \u00b7 Magnetics \u00b7 Seismic Refraction, Reflection and Tomography \u00b7 Surface-wave Analysis \u00b7 DC Resistivity and Electrical Tomography \u00b7 Induced Polarisation \u00b7 Magnetotellurics \u00b7 Controlled-source EM \u00b7 Ground-penetrating Radar \u00b7 Self-potential \u00b7 Borehole logging"],
+      ["Carried over","Survey design, forward modelling and inversion \u2014 plus a mapping course taught in projections, coordinate transformations, DEMs and gridding."]
     ] },
 
   { tag:"Research · 5 yrs", name:"MT-InSAR", title:"Remote Sensing &amp; Multi-Temporal InSAR",
