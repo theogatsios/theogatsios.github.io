@@ -592,8 +592,11 @@ const STORY = [
     moreLabel:"Coursework",
     thesis:{
       title:"Multi-Temporal SAR Interferometry on Argos basin",
-      body:`Ground-deformation time series built from stacked Sentinel-1 acquisitions,
-            used to characterise subsidence patterns across the basin.`,
+      body:`Ninety-eight Sentinel-1 passes over the Argive plain, coregistered and
+            differenced until what was left was the ground's own movement. The satellite
+            was never the hard part — deciding what to hold still was. With no GNSS
+            station in the basin, every millimetre measured hangs off a single point
+            chosen close to limestone, on the geologist's argument that it was least likely to move.`,
       /* Pulled out of the Qgis2threejs export: 23 609 persistent scatterers with
          their deformation rates, the mapped faults, and the geological units
          underneath. Formation colours are baked into the GeoJSON so this stays
@@ -630,13 +633,13 @@ const STORY = [
       camera:{center:[22.763,37.653], zoom:11.2, pitch:0, bearing:0, speed:1.4},
       scene:{url:"Argos/Argos.html", title:"Argos \u2014 3D scene", label:"3D Scene"},
       status:"23 609 scatterers \u00b7 56 faults \u00b7 19 units",
-      legend:{title:"LOS Velocity",
+      legend:{title:"LOS Deformation Rates",
         ramp:["#a50026","#e34a33","#9ac93f","#2eb85c","#2aa8a8","#3a76c4","#313695"],
         min:"\u221212 mm/yr", max:"+10 mm/yr",
         groupLabel:"Symbols",
         items:[ ["#ffffff","Reference point","star"],
                 ["#000000","Mapped fault","line"] ],
-        note:"LOS deformation rate, mm/yr \u00b7 negative is away from the satellite"} },
+        note:"Negative values represent motion away from the satellite"} },
     /* The three third-semester electives — one open, two specialisation — listed
        in the order they matter rather than the order they were sat. Together they
        are the whole trajectory: the near surface, the mathematics, the satellite. */
