@@ -1,0 +1,74 @@
+{
+ "corners": [
+  [
+   19.597954,
+   40.122301
+  ],
+  [
+   20.05233,
+   40.376396
+  ],
+  [
+   20.630046,
+   39.764366
+  ],
+  [
+   20.17567,
+   39.510271
+  ]
+ ],
+ "depths": [
+  -1.0,
+  0.0,
+  2.0,
+  4.0,
+  6.0,
+  8.0,
+  10.0,
+  15.0
+ ],
+ "fields": {
+  "vp": {
+   "label": "Vp",
+   "slices": [
+    "delvino_vp_m1.png",
+    "delvino_vp_0.png",
+    "delvino_vp_2.png",
+    "delvino_vp_4.png",
+    "delvino_vp_6.png",
+    "delvino_vp_8.png",
+    "delvino_vp_10.png",
+    "delvino_vp_15.png"
+   ],
+   "range": 6.0
+  },
+  "vs": {
+   "label": "Vs",
+   "slices": [
+    "delvino_vs_m1.png",
+    "delvino_vs_0.png",
+    "delvino_vs_2.png",
+    "delvino_vs_4.png",
+    "delvino_vs_6.png",
+    "delvino_vs_8.png",
+    "delvino_vs_10.png",
+    "delvino_vs_15.png"
+   ],
+   "range": 6.0
+  },
+  "vpvs": {
+   "label": "Vp/Vs",
+   "slices": [
+    null,
+    "delvino_vpvs_0.png",
+    "delvino_vpvs_2.png",
+    "delvino_vpvs_4.png",
+    "delvino_vpvs_6.png",
+    "delvino_vpvs_8.png",
+    "delvino_vpvs_10.png",
+    "delvino_vpvs_15.png"
+   ],
+   "range": 0.25
+  }
+ }
+}

@@ -91,6 +91,12 @@
   .pc h4{font-family:"Fraunces",serif;font-weight:600;font-size:18px;line-height:1.12;
     margin:0 0 7px;color:#eef2f8}
   .pc p{font-size:13px;line-height:1.5;color:var(--text-dim);margin:0}
+  .pc .prs{margin:0;display:grid;grid-template-columns:auto 1fr;gap:5px 14px;
+    font-family:"IBM Plex Mono",monospace;font-size:11px}
+  .pc .prs dt{color:#5a6a7d;letter-spacing:.08em;text-transform:uppercase;font-size:9.5px;
+    padding-top:1px}
+  .pc .prs dd{margin:0;color:var(--text)}
+  .pc h4.fp{font-size:15px;margin:0 0 9px;color:var(--gold)}
   .pc .pc-meta{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#566374;margin-top:9px}
   /* popup logo: smaller, and kept clear of the close button */
   .pc{--logo-h:19px}
@@ -243,16 +249,46 @@
   .legend .lnote{margin-top:9px;padding-top:8px;border-top:1px solid var(--line);
     color:#5a6a7d;font-size:9.5px;line-height:1.45;letter-spacing:0}
   .legend .sw{display:flex;align-items:flex-start;gap:8px;margin-top:5px;line-height:1.35}
-  .legend .sw i{width:11px;height:11px;border-radius:2px;flex:0 0 auto;
+  .legend .sw i{width:11px;height:11px;border-radius:2px;flex:0 0 auto;margin-top:1px;
     box-shadow:inset 0 0 0 1px rgba(255,255,255,.09)}
+  .legend .sw i.s-dot{border-radius:50%}
+  /* clip-path rather than the border trick, so the colour still comes from
+     background and the swatch list stays uniform */
+  .legend .sw i.s-tri{clip-path:polygon(50% 0,100% 100%,0 100%);border-radius:0;
+    box-shadow:none;width:12px;height:11px}
   .hud .probe{color:var(--cyan)}
+
+  /* ---------- TOMOGRAPHY CONTROL ---------- */
+  .tomo{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:6;
+    display:flex;flex-direction:column;gap:10px;align-items:stretch;
+    background:rgba(10,15,22,.86);backdrop-filter:blur(7px);border:1px solid var(--line);
+    border-radius:8px;padding:12px 16px 14px;box-shadow:0 8px 26px rgba(0,0,0,.5);
+    font-family:"IBM Plex Mono",monospace}
+  .tomo .fields{display:flex;gap:5px;justify-content:center}
+  .tomo .fields button{font:inherit;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--text-dim);background:transparent;border:1px solid var(--line);
+    border-radius:4px;padding:5px 10px;cursor:pointer;transition:all .2s}
+  .tomo .fields button:hover{color:var(--gold-soft);border-color:var(--gold-soft)}
+  .tomo .fields button[aria-pressed="true"]{color:#0a0f16;background:var(--gold);
+    border-color:var(--gold)}
+  .tomo .depth{display:flex;align-items:center;gap:12px}
+  .tomo input[type=range]{flex:1 1 auto;width:210px;accent-color:var(--gold);cursor:pointer}
+  .tomo .zlab{font-size:11px;color:var(--gold);min-width:74px;text-align:right;letter-spacing:.04em}
+  .tomo .hint{font-size:9.5px;color:#5a6a7d;text-align:center;letter-spacing:.06em;margin:0}
+  @media (max-width:900px){
+    .tomo{bottom:12px;padding:9px 12px 11px;gap:7px}
+    .tomo input[type=range]{width:140px}
+    .tomo .zlab{font-size:10px;min-width:64px}
+  }
 
   /* ---------- 3D SCENE OVERLAY ----------
      A Qgis2threejs export is a whole standalone page, so it is mounted in an
      iframe over the map pane rather than rebuilt as MapLibre layers. It only
      loads when the reader asks for it — three.js plus a DEM is not something
      to download on page load. */
-  .scene-launch{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:6;
+  /* top-right: the depth slider owns the bottom-centre, the legend the top-left,
+     and MapLibre's zoom control the bottom-right */
+  .scene-launch{position:absolute;right:18px;top:18px;z-index:6;
     display:inline-flex;align-items:center;gap:9px;cursor:pointer;
     font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;
     text-transform:uppercase;color:var(--gold);background:rgba(10,15,22,.84);
@@ -279,7 +315,7 @@
   .scene-bar button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   .scene-frame iframe{flex:1 1 auto;width:100%;border:0;background:#0a0f16}
   @media (max-width:900px){
-    .scene-launch{bottom:14px;font-size:10px;padding:7px 12px}
+    .scene-launch{right:12px;top:12px;font-size:10px;padding:7px 10px}
     .scene-bar{padding:7px 10px;font-size:10px}
   }
   @media (max-width:900px){
@@ -428,9 +464,53 @@ const STORY = [
     thesis:{
       title:"Passive Seismic Tomography in Delvina region using microseismic data",
       body:"A geophysical survey employing passive seismic tomography was carried out in the Delvina region of southeastern Albania. The study area lies close to the border with Greece, within a mountainous terrain of complex geological setting. Data recorded by a locally installed seismic network were processed and inverted, and the resulting velocity models were interpreted.",
-      //layer:{},
-      //legend:{}
-
+      /* The SIMULPS14 run, rebuilt as map layers: velocity slices as rotated image
+         overlays, the network, the located events and the ray paths that sampled
+         them. Depth slider and Vp / Vs / Vp-Vs switch appear over the map. */
+      layers:[
+        { type:"tomo", manifest:"Delvino/delvino_manifest.json", base:"Delvino/",
+          field:"vp", depth:2, opacity:.82,
+          // kept with the tomo layer so the slider redraw does not lose them
+          symbols:{ groupLabel:"Symbols", items:[
+              ["#eaf2ff","Seismic station (72)","tri"],
+              ["#e8b15e","Earthquake (139), sized by magnitude","dot"]
+            ],
+            groups:[{label:"Focal depth", ramp:["#f7e2b0","#e8b15e","#c9622c","#7d2b1e"],
+                     min:"0 km", max:"14 km"}] } },
+        // ray paths are off: they crowd the slices. Uncomment to bring them back.
+        // { type:"geojson", data:"Delvino/delvino_rays.geojson", fit:false,
+        //   color:"#5fd0d8", paint:{ line:{"line-width":.45,"line-opacity":.16} } },
+        { type:"geojson", data:"Delvino/delvino_events.geojson", fit:true,
+          paint:{ circle:{
+            // size by magnitude, colour by focal depth
+            "circle-radius":["interpolate",["linear"],["get","mag"], 0.5,2.2, 2.8,7],
+            "circle-color":["interpolate",["linear"],["get","depth"],
+              0,"#f7e2b0", 5,"#e8b15e", 10,"#c9622c", 14,"#7d2b1e"],
+            "circle-opacity":.85,
+            "circle-stroke-width":.6,
+            "circle-stroke-color":"#0a0f16" } },
+          popupTitle:"M {mag}",
+          popup:[ ["when","Origin time"," UTC"],
+                  ["depth","Focal depth"," km"],
+                  ["mag","Magnitude"],
+                  ["nobs","Phases"],
+                  ["rms","RMS residual"," s"] ] },
+        { type:"geojson", data:"Delvino/delvino_stations.geojson", fit:false,
+          shape:"triangle", fill:"#eaf2ff", stroke:"#16202b", iconSize:2 }
+      ],
+      camera:{center:[20.09,39.98], zoom:10.6, pitch:0, bearing:0, speed:1.4},
+      scene:{url:"Delvino/delvino.html", title:"Delvino \u2014 3D scene",
+             label:"3D Scene"},
+      status:"72 stations \u00b7 139 events \u00b7 8 depth slices",
+      legend:{ groupLabel:"Symbols", items:[
+          ["#eaf2ff","Seismic station (72)","tri"],
+          ["#e8b15e","Earthquake (139), sized by magnitude","dot"]
+        ],
+        groups:[
+          // matches the circle-color interpolation on the events layer
+          {label:"Focal depth", ramp:["#f7e2b0","#e8b15e","#c9622c","#7d2b1e"],
+           min:"0 km", max:"14 km"}
+        ]}
     },
     projectsLabel:"Field work",
     projects:[
@@ -812,6 +892,28 @@ function bboxOf(gj){
   return hit ? [[w,s],[e,n]] : null;
 }
 
+/* Point markers can be triangles: MapLibre circle layers only draw circles, so
+   the icon is painted to a canvas once, registered as a map image under a name
+   derived from its colours (so it is reused, never duplicated), and drawn by a
+   symbol layer. Returns null wherever a 2-D context is unavailable, and the
+   caller falls back to circles. */
+function triangleIcon(fill, stroke){
+  const id = "tri-" + String(fill).replace(/[^\w]/g,"") + "-" + String(stroke).replace(/[^\w]/g,"");
+  try{
+    if(map.hasImage && map.hasImage(id)) return id;
+    const S=28, c=document.createElement("canvas");
+    c.width=c.height=S;
+    const g=c.getContext("2d");
+    if(!g) return null;
+    g.beginPath();
+    g.moveTo(S/2, 3.5); g.lineTo(S-3.5, S-5); g.lineTo(3.5, S-5); g.closePath();
+    g.fillStyle=fill; g.fill();
+    g.lineWidth=2.4; g.lineJoin="round"; g.strokeStyle=stroke; g.stroke();
+    map.addImage(id, g.getImageData(0,0,S,S), {pixelRatio:2.8});
+    return id;
+  }catch(e){ return null; }
+}
+
 const POLY=["match",["geometry-type"],["Polygon","MultiPolygon"],true,false];
 const LINE=["match",["geometry-type"],["LineString","MultiLineString"],true,false];
 const PT  =["match",["geometry-type"],["Point","MultiPoint"],true,false];
@@ -820,9 +922,13 @@ const PT  =["match",["geometry-type"],["Point","MultiPoint"],true,false];
 const legendBox=document.getElementById("legend");
 const hudProbe=document.getElementById("hud-probe");
 let probeSpec=null, probeAt=0;
-const live={key:null, layers:[], sources:[], terrain:false, btn:null, host:null};
+const live={key:null, layers:[], sources:[], terrain:false, btn:null, host:null, handlers:[]};
 
 function clearData(){
+  // detach feature popups before their layers go, or the handlers leak
+  live.handlers.forEach(([ev,id,fn])=>{ try{ map.off(ev,id,fn); }catch(e){} });
+  live.handlers=[];
+  map.getCanvas && (map.getCanvas().style.cursor="");
   live.layers.forEach(id=>{ if(map.getLayer(id)) map.removeLayer(id); });
   if(live.terrain){ try{ map.setTerrain(null); }catch(e){} live.terrain=false; }
   live.sources.forEach(id=>{ if(map.getSource(id)) map.removeSource(id); });
@@ -834,6 +940,7 @@ function clearData(){
     if(st){ st.textContent=""; st.classList.remove("err"); }
   }
   live.btn=null; live.host=null; live.key=null;
+  tomoLegend=null;
   clearScene();
   if(map.getPitch()||map.getBearing())
     map.easeTo(still({pitch:0,bearing:0,duration:FLIGHT.reset}));
@@ -863,10 +970,48 @@ async function addSpec(spec,i,key){
     map.addLayer({id:`${base}-line`,type:"line",source:sid,
       filter:["any",POLY,LINE],
       paint:Object.assign({"line-color":c,"line-width":1.6,"line-opacity":.9},P.line||{})});
-    map.addLayer({id:`${base}-pt`,type:"circle",source:sid,filter:PT,
-      paint:Object.assign({"circle-radius":4.5,"circle-color":c,"circle-opacity":.9,
-        "circle-stroke-width":1,"circle-stroke-color":"#0a0f16"},P.circle||{})});
+    const icon = spec.shape==="triangle"
+      ? triangleIcon(spec.fill||c, spec.stroke||"#16202b") : null;
+    if(icon){
+      map.addLayer({id:`${base}-pt`,type:"symbol",source:sid,filter:PT,
+        layout:Object.assign({"icon-image":icon,"icon-size":spec.iconSize??0.5,
+          "icon-allow-overlap":true,"icon-ignore-placement":true}, P.layout||{})});
+    }else{
+      map.addLayer({id:`${base}-pt`,type:"circle",source:sid,filter:PT,
+        paint:Object.assign({"circle-radius":4.5,"circle-color":c,"circle-opacity":.9,
+          "circle-stroke-width":1,"circle-stroke-color":"#0a0f16"},P.circle||{})});
+    }
     live.layers.push(`${base}-fill`,`${base}-line`,`${base}-pt`);
+
+    /* Click popups. `popup` is a list of [property, label, suffix?] rows, and
+       `popupTitle` a template where {prop} is substituted, e.g. "M {mag}".
+       Rows whose property is missing are skipped rather than shown blank. */
+    if(spec.popup){
+      const rows=spec.popup, tpl=spec.popupTitle;
+      const fill=(t,p)=>String(t).replace(/\{(\w+)\}/g,(_,k)=>p[k]??"");
+      [`${base}-fill`,`${base}-line`,`${base}-pt`].forEach(id=>{
+        if(!map.getLayer(id)) return;
+        const onClick=e=>{
+          const f=e.features&&e.features[0]; if(!f) return;
+          const p=f.properties||{};
+          const body=rows.map(r=>{
+            const v=p[r[0]];
+            return (v===undefined||v===null||v==="")
+              ? "" : `<dt>${r[1]}</dt><dd>${v}${r[2]||""}</dd>`;
+          }).join("");
+          const at=f.geometry&&f.geometry.type==="Point" ? f.geometry.coordinates : e.lngLat;
+          new maplibregl.Popup({offset:11,closeButton:true,maxWidth:"250px"})
+            .setLngLat(at)
+            .setHTML(`<div class="pc">${tpl?`<h4 class="fp">${fill(tpl,p)}</h4>`:""}`
+                     +`<dl class="prs">${body}</dl></div>`)
+            .addTo(map);
+        };
+        const enter=()=>{ map.getCanvas().style.cursor="pointer"; };
+        const leave=()=>{ map.getCanvas().style.cursor=""; };
+        map.on("click",id,onClick); map.on("mouseenter",id,enter); map.on("mouseleave",id,leave);
+        live.handlers.push(["click",id,onClick],["mouseenter",id,enter],["mouseleave",id,leave]);
+      });
+    }
     return spec.fit===false ? null : bboxOf(gj);
   }
 
@@ -937,6 +1082,91 @@ async function addSpec(spec,i,key){
     return null;
   }
 
+  /* ---- tomography: a stack of depth slices with a slider and field switcher ----
+     spec:{ type:"tomo", manifest:"Delvino/delvino_manifest.json", base:"Delvino/",
+            field:"vp", depth:2, opacity:.85 }
+     The manifest is written by build.py and holds the rotated image corners, the
+     depth list, and a filename per (field, depth). Changing slice swaps the image
+     on the existing source rather than rebuilding the layer. */
+  if(spec.type==="tomo"){
+    const mres=await fetch(spec.manifest);
+    if(!mres.ok) throw new Error(`manifest not found (${mres.status})`);
+    const man=await mres.json();
+    const root=spec.base||"";
+    const fields=Object.keys(man.fields);
+    let field=fields.includes(spec.field)?spec.field:fields[0];
+    let zi=Math.max(0, man.depths.indexOf(spec.depth));
+    // slices are indexed positionally: a float key like 2.0 round-trips
+    // through JSON as 2, so string keys would silently miss
+    const sliceUrl=()=>root+man.fields[field].slices[zi];
+
+    // an image source reports nothing when the file is missing, so probe first
+    const probe=url=>new Promise((res,rej)=>{
+      const im=new Image();
+      im.onload=()=>res(true);
+      im.onerror=()=>rej(new Error(`slice not found: ${url.split("/").pop()}`));
+      im.src=url;
+    });
+    await probe(sliceUrl());
+    map.addSource(sid,{type:"image",url:sliceUrl(),coordinates:man.corners});
+    live.sources.push(sid);
+    map.addLayer({id:base,type:"raster",source:sid,
+      paint:{"raster-opacity":op,"raster-resampling":"linear"}});
+    live.layers.push(base);
+
+    const legendFor=()=>{
+      const f=man.fields[field], r=f.range;
+      const pct = field!=="vpvs";
+      return {title:`Delvina \u2014 ${f.label}`,
+        ramp:["#313695","#4589b4","#abd9e9","#f5f5f0","#fddba0","#f46d43","#a50026"],
+        min:pct?`\u2212${r}%`:(1.73-r).toFixed(2),
+        max:pct?`+${r}%`:(1.73+r).toFixed(2),
+        note:`${man.depths[zi]<0?"":""}z = ${man.depths[zi]} km \u00b7 ${
+          pct?"perturbation from the 1-D model":"absolute ratio"}`};
+    };
+
+    const box=document.createElement("div");
+    box.className="tomo";
+    box.innerHTML=`<div class="fields">${fields.map(f=>
+        `<button type="button" data-f="${f}" aria-pressed="${f===field}">${man.fields[f].label}</button>`
+      ).join("")}</div>
+      <div class="depth">
+        <input type="range" min="0" max="${man.depths.length-1}" step="1" value="${zi}"
+               aria-label="Depth slice">
+        <span class="zlab">z = ${man.depths[zi]} km</span>
+      </div>
+      <p class="hint">drag for depth \u00b7 slices fade where rays did not sample</p>`;
+    const rng=box.querySelector("input"), lab=box.querySelector(".zlab");
+    const hint=box.querySelector(".hint");
+    const HINT="drag for depth \u00b7 slices fade where rays did not sample";
+    const refresh=()=>{
+      const url=sliceUrl();
+      lab.textContent=`z = ${man.depths[zi]} km`;
+      setLegend(mergeLegends(legendFor(), spec.symbols||null));
+      probe(url).then(()=>{
+        const src=map.getSource(sid);
+        if(src && src.updateImage) src.updateImage({url});
+        hint.textContent=HINT; hint.style.color="";
+      }).catch(err=>{
+        // the slider would otherwise look broken when a PNG is missing
+        hint.textContent=err.message; hint.style.color="#d98a7a";
+        console.warn("[geo-cv]",err.message);
+      });
+    };
+    rng.addEventListener("input",()=>{ zi=+rng.value; refresh(); });
+    box.querySelectorAll("[data-f]").forEach(b=>b.addEventListener("click",()=>{
+      field=b.dataset.f;
+      box.querySelectorAll("[data-f]").forEach(o=>o.setAttribute("aria-pressed", String(o===b)));
+      refresh();
+    }));
+    clearTomo();
+    mapWrap.appendChild(box);
+    tomoBox=box;
+    setLegend(mergeLegends(legendFor(), spec.symbols||null));
+    tomoLegend=legendFor;          // so loadData does not overwrite it
+    return null;
+  }
+
   if(spec.type==="image"){
     map.addSource(sid,{type:"image",url:spec.url,coordinates:spec.coordinates});
     live.sources.push(sid);
@@ -970,7 +1200,7 @@ function loadData(p,key,btn,host){
       }
       if(live.key!==key) return;                  // scrolled away mid-load
       st.textContent = p.status || "on the map";
-      setLegend(p.legend||null);
+      setLegend(mergeLegends(tomoLegend && tomoLegend(), p.legend));
       if(p.scene) showSceneLaunch(p.scene);
       if(p.probe){ probeSpec=p.probe; hudProbe.hidden=false; hudProbe.textContent=`${p.probe.label||"value"} —`; }
       if(p.camera){
@@ -1012,10 +1242,13 @@ function loadData(p,key,btn,host){
    the iframe mounts only when that button is pressed. Both are torn down by
    clearData(), so changing chapter removes them like any other layer. */
 const mapWrap=document.querySelector(".mapwrap");
+let tomoLegend=null;
 let sceneBtn=null, sceneFrame=null;
 
+let tomoBox=null;
+function clearTomo(){ if(tomoBox){ tomoBox.remove(); tomoBox=null; } }
 function closeScene(){ if(sceneFrame){ sceneFrame.remove(); sceneFrame=null; } }
-function clearScene(){ closeScene(); if(sceneBtn){ sceneBtn.remove(); sceneBtn=null; } }
+function clearScene(){ closeScene(); clearTomo(); if(sceneBtn){ sceneBtn.remove(); sceneBtn=null; } }
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeScene(); });
 
 function showSceneLaunch(sc){
@@ -1047,21 +1280,34 @@ function openScene(sc){
 }
 
 /* ---- legend ---- */
+/* Items are [colour, text, shape?] where shape is "box" (default), "dot" or
+   "tri", so the swatch matches what is actually drawn on the map. A group may
+   carry `items`, its own `ramp`, or both. */
 function setLegend(cfg){
   if(!cfg){ legendBox.hidden=true; legendBox.innerHTML=""; return; }
+  const bar = c => `<div class="bar" style="background:linear-gradient(90deg,${c.ramp.join(",")})"></div>
+      <div class="ends"><span>${c.min??""}</span><span>${c.max??""}</span></div>`;
+  const swatches = list => (list||[]).map(it =>
+    `<div class="sw"><i class="s-${it[2]||"box"}" style="background:${it[0]}"></i>`
+    + `<span>${it[1]}</span></div>`).join("");
   let h=cfg.title?`<h5>${cfg.title}</h5>`:"";
-  if(cfg.ramp){
-    h+=`<div class="bar" style="background:linear-gradient(90deg,${cfg.ramp.join(",")})"></div>
-        <div class="ends"><span>${cfg.min??""}</span><span>${cfg.max??""}</span></div>`;
-  }
-  const swatches = list => list.map(it =>
-    `<div class="sw"><i style="background:${it[0]}"></i><span>${it[1]}</span></div>`).join("");
+  if(cfg.ramp) h+=bar(cfg);
   if(cfg.items) h+=swatches(cfg.items);
-  // `groups` keeps a long legend readable: [{label, items:[[colour,text],...]}]
   if(cfg.groups) h+=cfg.groups.map(g =>
-    `<div class="lgroup">${g.label?`<p class="glab">${g.label}</p>`:""}${swatches(g.items||[])}</div>`).join("");
+    `<div class="lgroup">${g.label?`<p class="glab">${g.label}</p>`:""}`
+    + `${g.ramp?bar(g):""}${swatches(g.items)}</div>`).join("");
   if(cfg.note) h+=`<div class="lnote">${cfg.note}</div>`;
   legendBox.innerHTML=h; legendBox.hidden=false;
+}
+
+/* A tomography layer owns the ramp at the top of the legend; the project's own
+   entries are folded in underneath rather than thrown away. */
+function mergeLegends(a, b){
+  if(!a) return b || null;
+  if(!b) return a;
+  const groups = [...(a.groups||[]), ...(b.groups||[])];
+  if(b.items) groups.unshift({label:b.groupLabel||"Symbols", items:b.items});
+  return Object.assign({}, a, {groups, note:a.note||b.note});
 }
 
 /* ---- optional raster value readout on hover ---- */
@@ -1135,7 +1381,7 @@ const GLYPH=`<svg class="glyph" viewBox="0 0 14 14" aria-hidden="true">`
 function detailHTML(s,i){
   let out="";
   if(s.thesis){
-    const t=s.thesis, hasData=!!(t.layer||t.layers);
+    const t=s.thesis, hasData=!!(t.layer||t.layers||t.scene);
     const head = hasData
       ? `<button class="play" type="button" aria-pressed="false" data-t="1"
            title="Show this data on the map">${GLYPH}<span class="ptxt">${t.title}</span></button>`
