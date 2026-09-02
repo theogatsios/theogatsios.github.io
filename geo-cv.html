@@ -289,6 +289,12 @@
   .tomo.plain{padding:10px 14px 11px;gap:8px}
   .pc .pimg{display:block;width:100%;max-width:280px;height:auto;border-radius:4px;
     margin:0 0 9px;background:#fff}
+  .pc .tsc{display:block;width:100%;height:auto;margin:0 0 8px}
+  .pc .tsc .ts{fill:none;stroke:#5fd0d8;stroke-width:1.4}
+  .pc .tsc .tp circle{fill:#5fd0d8}
+  .pc .tsc .ax{stroke:#3a4757;stroke-width:.7;stroke-dasharray:2 2}
+  .pc .tsc .tl{fill:#5a6a7d;font-family:"IBM Plex Mono",monospace;font-size:7.5px}
+  .pc .tsc .tv{fill:var(--gold);font-family:"IBM Plex Mono",monospace;font-size:9px}
   .pc .pcap{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:#5a6a7d;
     letter-spacing:.04em;margin:0 0 8px}
 
@@ -743,9 +749,11 @@ const STORY = [
               "circle-stroke-width":1.3, "circle-stroke-color":"#ffffff" } },
             popupTitle:"{title}",
             popupWidth:"310px",
-            imgBase:"CumbreVieja/",
-            popupImg:{asc:"cv_ts_asc.png", desc:"cv_ts_desc.png"},
-            popupCaption:"LOS displacement, m \u00b7 plot from the selected orbit",
+            /* Digitised off the plates' own insets: axes calibrated from the
+               tick labels and gridlines, curve sampled at Sentinel-1's 6-day
+               repeat. Drawn live, so it follows the selected orbit. */
+            popupChart:"CumbreVieja/cv_series.json",
+            popupCaption:"LOS displacement, mm \u00b7 digitised from the SBAS inset",
             popup:[ ["note","Role"], ["coords","Position"] ] }
         ],
         camera:{center:[-17.869,28.640], zoom:10.4, pitch:0, bearing:0, speed:3.4},
@@ -1044,6 +1052,39 @@ function bboxOf(gj){
    derived from its colours (so it is reused, never duplicated), and drawn by a
    symbol layer. Returns null wherever a 2-D context is unavailable, and the
    caller falls back to circles. */
+/* Draws a displacement time series as inline SVG inside a popup. Dates are
+   plotted on a real time axis, so an uneven acquisition gap shows as a gap
+   rather than being evened out. Zero is drawn as a baseline because that is the
+   reference the series is relative to. */
+function seriesChart(series, opt){
+  const o=Object.assign({w:270,h:120,pad:{l:34,r:6,t:8,b:18},unit:"mm",scale:1000},opt||{});
+  if(!series || series.length<2) return "";
+  const t=series.map(p=>Date.parse(p.d)), v=series.map(p=>p.v*o.scale);
+  const t0=Math.min(...t), t1=Math.max(...t);
+  let lo=Math.min(0,...v), hi=Math.max(0,...v);
+  const padv=(hi-lo)*0.12 || 1; lo-=padv; hi+=padv;
+  const X=x=>o.pad.l+(x-t0)/(t1-t0||1)*(o.w-o.pad.l-o.pad.r);
+  const Y=y=>o.pad.t+(hi-y)/(hi-lo||1)*(o.h-o.pad.t-o.pad.b);
+  const path=series.map((p,i)=>`${i?"L":"M"}${X(t[i]).toFixed(1)},${Y(v[i]).toFixed(1)}`).join("");
+  const dots=series.map((p,i)=>
+    `<circle cx="${X(t[i]).toFixed(1)}" cy="${Y(v[i]).toFixed(1)}" r="1.7"/>`).join("");
+  const fmt=ms=>new Date(ms).toLocaleDateString("en-GB",{day:"2-digit",month:"short"});
+  const last=series[series.length-1];
+  return `<svg class="tsc" viewBox="0 0 ${o.w} ${o.h}" role="img"
+      aria-label="displacement time series, ${series.length} acquisitions">
+    <line class="ax" x1="${o.pad.l}" y1="${Y(0)}" x2="${o.w-o.pad.r}" y2="${Y(0)}"/>
+    <text class="tl" x="${o.pad.l-4}" y="${Y(hi)+4}" text-anchor="end">${hi.toFixed(0)}</text>
+    <text class="tl" x="${o.pad.l-4}" y="${Y(0)+3}" text-anchor="end">0</text>
+    <text class="tl" x="${o.pad.l-4}" y="${Y(lo)}" text-anchor="end">${lo.toFixed(0)}</text>
+    <path class="ts" d="${path}"/>
+    <g class="tp">${dots}</g>
+    <text class="tl" x="${o.pad.l}" y="${o.h-5}">${fmt(t0)}</text>
+    <text class="tl" x="${o.w-o.pad.r}" y="${o.h-5}" text-anchor="end">${fmt(t1)}</text>
+    <text class="tv" x="${o.w-o.pad.r}" y="${Math.max(12,Y(v[v.length-1])-6)}"
+      text-anchor="end">${last.v>0?"+":""}${(last.v*o.scale).toFixed(0)} ${o.unit}</text>
+  </svg>`;
+}
+
 /* Lithologic fill patterns, after the conventions in FGDC-STD-013-2006:
    brick for carbonates, ovals for conglomerate, dash-and-line for flysch,
    dashes for marl/sandstone, wavy lines for schist, sparse dots for cover.
@@ -1125,6 +1166,7 @@ function markerIcon(shape, fill, stroke){
   }catch(e){ return null; }
 }
 
+const CHART_DATA={};   // url -> parsed series, fetched once per layer
 const POLY=["match",["geometry-type"],["Polygon","MultiPolygon"],true,false];
 const LINE=["match",["geometry-type"],["LineString","MultiLineString"],true,false];
 const PT  =["match",["geometry-type"],["Point","MultiPoint"],true,false];
@@ -1166,6 +1208,12 @@ async function addSpec(spec,i,key){
   const op = spec.opacity===undefined ? 0.85 : spec.opacity;
 
   if(spec.type==="geojson"){
+    if(spec.popupChart && !CHART_DATA[spec.popupChart]){
+      try{
+        const cr=await fetch(spec.popupChart);
+        if(cr.ok) CHART_DATA[spec.popupChart]=await cr.json();
+      }catch(e){ console.warn("[geo-cv] chart data:",e.message); }
+    }
     let gj=spec.data;
     if(typeof gj==="string"){
       const r=await fetch(gj);
@@ -1226,6 +1274,15 @@ async function addSpec(spec,i,key){
           const p=f.properties||{};
           // popupImg may be a filename or an object keyed by the switch option
           let head="";
+          // popupChart:{data:{key:series}} draws the series live; the key comes
+          // from the active switch, so the plot follows the selected orbit
+          let head2="";
+          if(spec.popupChart && CHART_DATA[spec.popupChart]){
+            const all=CHART_DATA[spec.popupChart];
+            const set=all[switchKey] || all[Object.keys(all)[0]];
+            if(set && set.series) head2=seriesChart(set.series,{unit:"mm"})
+              + (spec.popupCaption?`<p class="pcap">${spec.popupCaption}</p>`:"");
+          }
           // popupImgWhen:["prop","value"] limits the image to matching features,
           // so a shared layer can hold points that do and do not have a plot
           const gate=spec.popupImgWhen;
@@ -1245,7 +1302,7 @@ async function addSpec(spec,i,key){
           new maplibregl.Popup({offset:11,closeButton:true,maxWidth:spec.popupWidth||"250px"})
             .setLngLat(at)
             .setHTML(`<div class="pc">${tpl?`<h4 class="fp">${fill(tpl,p)}</h4>`:""}`
-                     +head+`<dl class="prs">${body}</dl></div>`)
+                     +head2+head+`<dl class="prs">${body}</dl></div>`)
             .addTo(map);
         };
         const enter=()=>{ map.getCanvas().style.cursor="pointer"; };
