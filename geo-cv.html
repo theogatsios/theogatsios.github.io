@@ -619,7 +619,7 @@ const STORY = [
          readable. */
       layers:[
         { type:"geojson", data:"Argos/argos_formations.geojson", fit:false,
-          paint:{ fill:{"fill-color":["get","col"], "fill-opacity":.46},
+          paint:{ fill:{"fill-color":["get","col"], "fill-opacity":.8},
                   line:{"line-color":"#0d141c","line-width":.4,"line-opacity":.45} },
           // FGDC-style lithologic fills, keyed off the `pat` field
           patterns:["carbonate","conglomerate","flysch","clastic","schist","cover"],
@@ -635,16 +635,21 @@ const STORY = [
           paint:{ circle:{
             // red away from the satellite (subsidence), blue toward it
             "circle-radius":["interpolate",["linear"],["zoom"], 9,1.1, 12,1.9, 15,3.6],
+            /* Symmetric about zero with green for stable ground: red away from
+               the satellite, blue toward it. Same stops as the Cumbre Vieja
+               colourbar, so both InSAR projects read on one convention. */
             "circle-color":["interpolate",["linear"],["get","v"],
-              -12,"#a50026", -6,"#f46d43", -2,"#fddba0",
-                0,"#f5f5f0",
-                2,"#abd9e9",  6,"#4589b4",  10,"#313695"],
+              -12,"#ff2a00",  -8,"#ff9a00",  -4,"#f2e600",
+                0,"#37d13a",
+                4,"#00c9a7",   8,"#1f7ae0",  12,"#2b1fd6"],
             "circle-opacity":.95,
             "circle-stroke-width":0 } },
           popupTitle:"{v} mm/yr",
+          /* Only the two fields the export actually names. The third numeric
+             column tracks the uncertainty exactly (ratio 2.96), so it is the
+             same quantity rescaled, not coherence - it is not shown. */
           popup:[ ["v","Deformation rate"," mm/yr"],
-                  ["s","Uncertainty"," mm/yr"],
-                  ["c","Coherence"] ] }
+                  ["s","Uncertainty"," \u00b1mm/yr"] ] }
       ],
       camera:{center:[22.763,37.653], zoom:11.2, pitch:0, bearing:0, speed:1.4},
       scene:{url:"Argos/Argos.html", title:"Argos \u2014 3D scene", label:"3D Scene"},
@@ -653,8 +658,8 @@ const STORY = [
          one compact group by lithology instead of 18 unit codes. Every unit is
          still named in its own popup, and the fills follow FGDC-STD-013. */
       legend:{title:"Argos basin",
-        ramp:["#a50026","#f46d43","#fddba0","#f5f5f0","#abd9e9","#4589b4","#313695"],
-        min:"\u221212", max:"+10",
+        ramp:["#ff2a00","#ff9a00","#f2e600","#37d13a","#00c9a7","#1f7ae0","#2b1fd6"],
+        min:"\u221212", max:"+12",
         groupLabel:"LOS rate, mm/yr",
         items:[ ["#0a0d12","Mapped fault","box"] ],
         groups:[
@@ -728,7 +733,7 @@ const STORY = [
                       {key:"desc", label:"Descending", url:"cv_desc.png"} ] },
           // reference area: a star, matching the symbol drawn in the figure
           { type:"geojson", fit:false, data:CUMBRE_REF,
-            shape:"star", fill:"#ffffff", stroke:"#ffffff", iconSize:4,
+            shape:"star", fill:"#ffffff", stroke:"#0a0d12", iconSize:4,
             popupTitle:"{title}",
             popup:[ ["note","Role"], ["coords","Position"] ] },
           // the scatterer whose displacement history is plotted
