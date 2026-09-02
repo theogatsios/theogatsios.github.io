@@ -252,6 +252,8 @@
   .legend .sw i{width:11px;height:11px;border-radius:2px;flex:0 0 auto;margin-top:1px;
     box-shadow:inset 0 0 0 1px rgba(255,255,255,.09)}
   .legend .sw i.s-dot{border-radius:50%}
+  .legend .sw i.s-pat{border-radius:2px;width:14px;height:12px;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
   /* clip-path rather than the border trick, so the colour still comes from
      background and the swatch list stays uniform */
   .legend .sw i.s-tri{clip-path:polygon(50% 0,100% 100%,0 100%);border-radius:0;
@@ -617,14 +619,18 @@ const STORY = [
          readable. */
       layers:[
         { type:"geojson", data:"Argos/argos_formations.geojson", fit:false,
-          paint:{ fill:{"fill-color":["get","col"], "fill-opacity":.34},
+          paint:{ fill:{"fill-color":["get","col"], "fill-opacity":.46},
                   line:{"line-color":"#0d141c","line-width":.4,"line-opacity":.45} },
+          // FGDC-style lithologic fills, keyed off the `pat` field
+          patterns:["carbonate","conglomerate","flysch","clastic","schist","cover"],
+          patternInk:"#1b2430", patternOpacity:.55,
           popupTitle:"{code} \u2014 {name}",
           popup:[ ["unit","Tectonic unit"], ["age","Age"], ["lith","Lithology"] ] },
         { type:"geojson", data:"Argos/argos_faults.geojson", fit:false,
-          color:"#f5f7fa",
-          paint:{ line:{"line-width":["interpolate",["linear"],["zoom"],9,.7,14,2.1],
-                        "line-opacity":.85} } },
+          color:"#0a0d12",
+          paint:{ line:{"line-color":"#0a0d12",
+                        "line-width":["interpolate",["linear"],["zoom"],9,.8,14,2.3],
+                        "line-opacity":.9} } },
         { type:"geojson", data:"Argos/argos_ps.geojson", fit:true,
           paint:{ circle:{
             // red away from the satellite (subsidence), blue toward it
@@ -633,7 +639,8 @@ const STORY = [
               -12,"#a50026", -6,"#f46d43", -2,"#fddba0",
                 0,"#f5f5f0",
                 2,"#abd9e9",  6,"#4589b4",  10,"#313695"],
-            "circle-opacity":.92 } },
+            "circle-opacity":.95,
+            "circle-stroke-width":0 } },
           popupTitle:"{v} mm/yr",
           popup:[ ["v","Deformation rate"," mm/yr"],
                   ["s","Uncertainty"," mm/yr"],
@@ -642,24 +649,25 @@ const STORY = [
       camera:{center:[22.763,37.653], zoom:11.2, pitch:0, bearing:0, speed:1.4},
       scene:{url:"Argos/Argos.html", title:"Argos \u2014 3D scene", label:"3D Scene"},
       status:"23 609 scatterers \u00b7 56 faults \u00b7 19 units",
-      /* Formation colours and ages come from the IGME sheet's own legend, so the
-         geology reads as the published map does. Groups follow the plate: the
-         cover by epoch, the Alpine formations by tectonic unit. */
+      /* The scatterers are the result, so the rate ramp leads and the geology is
+         one compact group by lithology instead of 18 unit codes. Every unit is
+         still named in its own popup, and the fills follow FGDC-STD-013. */
       legend:{title:"Argos basin",
         ramp:["#a50026","#f46d43","#fddba0","#f5f5f0","#abd9e9","#4589b4","#313695"],
         min:"\u221212", max:"+10",
-        groupLabel:"Symbols",
-        items:[ ["#f5f7fa","Mapped fault","box"] ],
+        groupLabel:"LOS rate, mm/yr",
+        items:[ ["#0a0d12","Mapped fault","box"] ],
         groups:[
-          {label:"Holocene", items:[["#E7CF96","al","box"], ["#CAA489","sc","box"], ["#B5877E","pt,co","box"]]},
-          {label:"Plio-Pleistocene", items:[["#CC9BA3","c2","box"], ["#84A440","c1","box"], ["#F3F04F","m","box"], ["#CDB3AC","c","box"], ["#8AAFBD","st,m","box"], ["#EFD04D","c,m","box"]]},
-          {label:"Eastern Greece Unit", items:[["#F8EBD1","KEG+DEG","box"], ["#FEFDE6","Sh","box"]]},
-          {label:"Western Thessaly – Beotia Unit", items:[["#FBF7F0","KWT","box"], ["#E1DDE7","FWT","box"]]},
-          {label:"Pindos Unit (Arcadian nappe)", items:[["#B6BFB7","FP","box"], ["#9DBDA6","KP","box"]]},
-          {label:"Tripolis Unit", items:[["#F0C0B3","FT","box"], ["#FCFAF6","KT+DT","box"]]},
-          {label:"Arna Unit", items:[["#B3A27A","Sch","box"]]}
+          {label:"Lithology", items:[
+            ["#F8EBD1","Limestone & dolomite","pat-carbonate"],
+            ["#B6BFB7","Flysch & clastics","pat-flysch"],
+            ["#CDB3AC","Conglomerate","pat-conglomerate"],
+            ["#8AAFBD","Marl & sandstone","pat-clastic"],
+            ["#B3A27A","Schist","pat-schist"],
+            ["#E7CF96","Quaternary cover","pat-cover"]
+          ]}
         ],
-        note:"LOS rate, mm/yr \u00b7 formations after IGME, colours from the sheet legend"} },
+        note:"23 609 scatterers \u00b7 formations after IGME, patterns after FGDC-STD-013"} },
     /* The three third-semester electives — one open, two specialisation — listed
        in the order they matter rather than the order they were sat. Together they
        are the whole trajectory: the near surface, the mathematics, the satellite. */
@@ -1031,6 +1039,59 @@ function bboxOf(gj){
    derived from its colours (so it is reused, never duplicated), and drawn by a
    symbol layer. Returns null wherever a 2-D context is unavailable, and the
    caller falls back to circles. */
+/* Lithologic fill patterns, after the conventions in FGDC-STD-013-2006:
+   brick for carbonates, ovals for conglomerate, dash-and-line for flysch,
+   dashes for marl/sandstone, wavy lines for schist, sparse dots for cover.
+   Drawn on a transparent tile so the colour fill beneath still reads, and
+   registered once under a stable name. Returns a data URL too, so the legend
+   swatch uses the very same tile as the map. */
+const PATTERN_CACHE={};
+function lithPattern(kind, ink){
+  if(PATTERN_CACHE[kind]) return PATTERN_CACHE[kind];
+  const S=32;
+  let c, g;
+  try{
+    c=document.createElement("canvas"); c.width=c.height=S;
+    g=c.getContext("2d");
+    if(!g) return null;
+  }catch(e){ return null; }
+  g.strokeStyle=ink; g.fillStyle=ink; g.lineWidth=1.1;
+  const line=(x1,y1,x2,y2)=>{ g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke(); };
+  if(kind==="carbonate"){                       // brickwork
+    line(0,10.5,S,10.5); line(0,21.5,S,21.5); line(0,32.5,S,32.5);
+    line(8.5,0,8.5,10.5); line(24.5,10.5,24.5,21.5); line(8.5,21.5,8.5,32);
+  }else if(kind==="conglomerate"){              // clasts
+    [[8,8,5,3.4],[23,17,5.6,3.8],[13,25,4.4,3]].forEach(([x,y,rx,ry])=>{
+      g.beginPath(); g.ellipse(x,y,rx,ry,0.5,0,6.283); g.stroke(); });
+  }else if(kind==="flysch"){                    // alternating bed and dash
+    line(0,7.5,S,7.5);
+    g.setLineDash([5,5]); line(0,15.5,S,15.5); g.setLineDash([]);
+    line(0,23.5,S,23.5);
+    g.setLineDash([5,5]); line(0,31.5,S,31.5); g.setLineDash([]);
+  }else if(kind==="clastic"){                   // marl / sandstone dashes
+    g.setLineDash([7,6]);
+    line(0,6.5,S,6.5); line(4,16.5,S,16.5); line(0,26.5,S,26.5);
+    g.setLineDash([]);
+  }else if(kind==="schist"){                    // schistosity
+    for(const y of [7,17,27]){
+      g.beginPath();
+      for(let x=0;x<=S;x+=2) g[x?"lineTo":"moveTo"](x, y+Math.sin(x/3.1)*2.1);
+      g.stroke();
+    }
+  }else{                                        // cover: sparse stipple
+    [[6,9],[17,5],[27,13],[11,20],[22,25],[3,27]].forEach(([x,y])=>{
+      g.beginPath(); g.arc(x,y,1.15,0,6.283); g.fill(); });
+  }
+  let url=null;
+  try{ url=c.toDataURL("image/png"); }catch(e){}
+  const id="p-"+kind;
+  try{
+    if(!(map.hasImage && map.hasImage(id)))
+      map.addImage(id, g.getImageData(0,0,S,S), {pixelRatio:2});
+  }catch(e){}
+  return (PATTERN_CACHE[kind]={id, url});
+}
+
 function markerIcon(shape, fill, stroke){
   const id = `m-${shape}-${String(fill).replace(/[^\w]/g,"")}-${String(stroke).replace(/[^\w]/g,"")}`;
   try{
@@ -1067,12 +1128,13 @@ const PT  =["match",["geometry-type"],["Point","MultiPoint"],true,false];
 const legendBox=document.getElementById("legend");
 const hudProbe=document.getElementById("hud-probe");
 let probeSpec=null, probeAt=0;
-const live={key:null, layers:[], sources:[], terrain:false, btn:null, host:null, handlers:[]};
+const live={key:null, layers:[], sources:[], terrain:false, btn:null, host:null,
+            handlers:[], popupLayers:[]};
 
 function clearData(){
   // detach feature popups before their layers go, or the handlers leak
   live.handlers.forEach(([ev,id,fn])=>{ try{ map.off(ev,id,fn); }catch(e){} });
-  live.handlers=[];
+  live.handlers=[]; live.popupLayers=[];
   map.getCanvas && (map.getCanvas().style.cursor="");
   live.layers.forEach(id=>{ if(map.getLayer(id)) map.removeLayer(id); });
   if(live.terrain){ try{ map.setTerrain(null); }catch(e){} live.terrain=false; }
@@ -1112,6 +1174,17 @@ async function addSpec(spec,i,key){
     const P=spec.paint||{};
     map.addLayer({id:`${base}-fill`,type:"fill",source:sid,filter:POLY,
       paint:Object.assign({"fill-color":c,"fill-opacity":.22},P.fill||{})});
+    // a second fill above the colour, carrying the lithologic pattern
+    if(spec.patterns){
+      const ok=spec.patterns.every(k=>lithPattern(k, spec.patternInk||"#1b2430"));
+      if(ok){
+        map.addLayer({id:`${base}-pat`,type:"fill",source:sid,filter:POLY,
+          paint:{"fill-pattern":["match",["get", spec.patternKey||"pat"],
+                   ...spec.patterns.flatMap(k=>[k,"p-"+k]), "p-cover"],
+                 "fill-opacity":spec.patternOpacity??.5}});
+        live.layers.push(`${base}-pat`);
+      }
+    }
     map.addLayer({id:`${base}-line`,type:"line",source:sid,
       filter:["any",POLY,LINE],
       paint:Object.assign({"line-color":c,"line-width":1.6,"line-opacity":.9},P.line||{})});
@@ -1137,6 +1210,14 @@ async function addSpec(spec,i,key){
         if(!map.getLayer(id)) return;
         const onClick=e=>{
           const f=e.features&&e.features[0]; if(!f) return;
+          /* MapLibre fires a handler per layer, so a scatterer sitting on a
+             formation polygon would open two popups. Ask what is actually
+             rendered under the cursor and let only the topmost layer answer. */
+          try{
+            const live_ids=live.popupLayers.filter(l=>map.getLayer(l));
+            const hits=map.queryRenderedFeatures(e.point,{layers:live_ids});
+            if(hits.length && hits[0].layer && hits[0].layer.id!==id) return;
+          }catch(err){ /* no queryRenderedFeatures in the harness: fall through */ }
           const p=f.properties||{};
           // popupImg may be a filename or an object keyed by the switch option
           let head="";
@@ -1166,6 +1247,7 @@ async function addSpec(spec,i,key){
         const leave=()=>{ map.getCanvas().style.cursor=""; };
         map.on("click",id,onClick); map.on("mouseenter",id,enter); map.on("mouseleave",id,leave);
         live.handlers.push(["click",id,onClick],["mouseenter",id,enter],["mouseleave",id,leave]);
+        live.popupLayers.push(id);
       });
     }
     return spec.fit===false ? null : bboxOf(gj);
@@ -1491,9 +1573,19 @@ function setLegend(cfg){
   if(!cfg){ legendBox.hidden=true; legendBox.innerHTML=""; return; }
   const bar = c => `<div class="bar" style="background:linear-gradient(90deg,${c.ramp.join(",")})"></div>
       <div class="ends"><span>${c.min??""}</span><span>${c.max??""}</span></div>`;
+  /* A third element of "pat-<kind>" paints the swatch with the very same tile
+     the map uses, so legend and map cannot drift apart. */
+  const patStyle = (colour, shape) => {
+    if(!/^pat-/.test(shape||"")) return `background:${colour}`;
+    const p = lithPattern(shape.slice(4), "#1b2430");
+    return p && p.url
+      ? `background-color:${colour};background-image:url(${p.url});background-size:16px 16px`
+      : `background:${colour}`;
+  };
   const swatches = list => (list||[]).map(it =>
-    `<div class="sw"><i class="s-${it[2]||"box"}" style="background:${it[0]}"></i>`
-    + `<span>${it[1]}</span></div>`).join("");
+    `<div class="sw"><i class="s-${
+        /^pat-/.test(it[2]||"") ? "pat" : (it[2]||"box")
+      }" style="${patStyle(it[0], it[2])}"></i><span>${it[1]}</span></div>`).join("");
   let h=cfg.title?`<h5>${cfg.title}</h5>`:"";
   if(cfg.ramp) h+=bar(cfg);
   // groupLabel gives top-level items a heading, so a legend reads the same
