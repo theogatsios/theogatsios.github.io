@@ -289,12 +289,39 @@
   .tomo.plain{padding:10px 14px 11px;gap:8px}
   .pc .pimg{display:block;width:100%;max-width:280px;height:auto;border-radius:4px;
     margin:0 0 9px;background:#fff}
-  .pc .tsc{display:block;width:100%;height:auto;margin:0 0 8px}
-  .pc .tsc .ts{fill:none;stroke:#5fd0d8;stroke-width:1.4}
-  .pc .tsc .tp circle{fill:#5fd0d8}
-  .pc .tsc .ax{stroke:#3a4757;stroke-width:.7;stroke-dasharray:2 2}
-  .pc .tsc .tl{fill:#5a6a7d;font-family:"IBM Plex Mono",monospace;font-size:7.5px}
-  .pc .tsc .tv{fill:var(--gold);font-family:"IBM Plex Mono",monospace;font-size:9px}
+  /* ---------- time-series charts ---------- */
+  .tsc{display:block;width:100%;height:auto}
+  .tsc .ts{fill:none;stroke:#5fd0d8;stroke-width:1.5;stroke-linejoin:round}
+  .tsc .tp circle{fill:#5fd0d8}
+  .tsc .ax{stroke:#46586c;stroke-width:.8;stroke-dasharray:3 3}
+  .tsc .fr{stroke:#46586c;stroke-width:.8}
+  .tsc .gr{stroke:#26313d;stroke-width:.6}
+  .tsc .tl{fill:#6b7b8f;font-family:"IBM Plex Mono",monospace;font-size:8.5px}
+  .tsc .rot{font-size:8px}
+  .tsc .at{fill:var(--gold-soft);font-family:"IBM Plex Mono",monospace;
+    font-size:9px;letter-spacing:.08em}
+  .pc .tsc{margin:0 0 6px;cursor:zoom-in}
+  .pc .tsc:hover .ts{stroke:#8fe3e9}
+
+  .chart-frame{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;
+    background:#0a0f16;animation:sceneIn .28s ease}
+  .chart-bar{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:9px 13px;
+    border-bottom:1px solid var(--line);background:rgba(10,15,22,.96);
+    font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--text-dim)}
+  .chart-bar .st{color:var(--gold-soft);text-transform:uppercase;letter-spacing:.18em;font-size:10px}
+  .chart-bar .cap{color:var(--gold);letter-spacing:.03em}
+  .chart-bar .sp{margin-left:auto;display:flex;gap:10px;align-items:center}
+  .chart-bar .ob{display:flex;gap:4px}
+  .chart-bar button{background:transparent;border:1px solid var(--line);color:var(--text-dim);
+    cursor:pointer;font:inherit;font-size:10px;padding:4px 9px;border-radius:4px;
+    transition:color .2s,border-color .2s}
+  .chart-bar button:hover{color:var(--gold);border-color:var(--gold-soft)}
+  .chart-bar button[aria-pressed="true"]{color:#0a0f16;background:var(--gold);border-color:var(--gold)}
+  .chart-body{flex:1 1 auto;min-height:0;padding:6px 10px 0;display:flex}
+  .chart-body svg{flex:1 1 auto;height:100%;cursor:grab}
+  .chart-body svg:active{cursor:grabbing}
+  .chart-hint{flex:0 0 auto;margin:0;padding:5px 0 9px;text-align:center;
+    font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:#5a6a7d;letter-spacing:.06em}
   .pc .pcap{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:#5a6a7d;
     letter-spacing:.04em;margin:0 0 8px}
 
@@ -748,7 +775,7 @@ const STORY = [
               "circle-radius":11, "circle-color":"#116ffc",
               "circle-stroke-width":1.3, "circle-stroke-color":"#ffffff" } },
             popupTitle:"{title}",
-            popupWidth:"310px",
+            popupWidth:"380px",
             /* Digitised off the plates' own insets: axes calibrated from the
                tick labels and gridlines, curve sampled at Sentinel-1's 6-day
                repeat. Drawn live, so it follows the selected orbit. */
@@ -1052,38 +1079,159 @@ function bboxOf(gj){
    derived from its colours (so it is reused, never duplicated), and drawn by a
    symbol layer. Returns null wherever a 2-D context is unavailable, and the
    caller falls back to circles. */
-/* Draws a displacement time series as inline SVG inside a popup. Dates are
-   plotted on a real time axis, so an uneven acquisition gap shows as a gap
-   rather than being evened out. Zero is drawn as a baseline because that is the
-   reference the series is relative to. */
-function seriesChart(series, opt){
-  const o=Object.assign({w:270,h:120,pad:{l:34,r:6,t:8,b:18},unit:"mm",scale:1000},opt||{});
+/* ---------- displacement time series ------------------------------------
+   seriesChart() draws the small chart that sits in a popup; openChartFrame()
+   opens the same data large, over the map, with zoom, pan and a readout. Both
+   plot on a real time axis so an uneven acquisition gap stays a gap. */
+
+const CHART_DATA={};      // url -> parsed series, fetched once per layer
+let chartFrame=null;
+
+const fmtDay = ms => new Date(ms).toLocaleDateString("en-GB",
+                       {day:"2-digit", month:"short"});
+const fmtFull = ms => new Date(ms).toLocaleDateString("en-GB",
+                       {day:"2-digit", month:"short", year:"numeric"});
+
+function niceTicks(lo, hi, n){
+  const raw=(hi-lo)/n, mag=Math.pow(10,Math.floor(Math.log10(raw)));
+  const step=[1,2,2.5,5,10].map(m=>m*mag).find(v=>v>=raw) || 10*mag;
+  const out=[];
+  for(let v=Math.ceil(lo/step)*step; v<=hi+1e-9; v+=step) out.push(+v.toFixed(10));
+  return out;
+}
+
+/* opts: w,h, dates (label every point), title (axis titles), dom ([t0,t1]) */
+function seriesChart(series, opts){
+  const o=Object.assign({w:330,h:190,dates:false,titles:true,cls:""},opts||{});
   if(!series || series.length<2) return "";
-  const t=series.map(p=>Date.parse(p.d)), v=series.map(p=>p.v*o.scale);
-  const t0=Math.min(...t), t1=Math.max(...t);
+  const pad={l:o.titles?52:34, r:10, t:10, b:o.dates?62:(o.titles?38:20)};
+  const t=series.map(p=>Date.parse(p.d)), v=series.map(p=>p.v);
+  const dom=o.dom||[Math.min(...t),Math.max(...t)];
   let lo=Math.min(0,...v), hi=Math.max(0,...v);
-  const padv=(hi-lo)*0.12 || 1; lo-=padv; hi+=padv;
-  const X=x=>o.pad.l+(x-t0)/(t1-t0||1)*(o.w-o.pad.l-o.pad.r);
-  const Y=y=>o.pad.t+(hi-y)/(hi-lo||1)*(o.h-o.pad.t-o.pad.b);
-  const path=series.map((p,i)=>`${i?"L":"M"}${X(t[i]).toFixed(1)},${Y(v[i]).toFixed(1)}`).join("");
-  const dots=series.map((p,i)=>
-    `<circle cx="${X(t[i]).toFixed(1)}" cy="${Y(v[i]).toFixed(1)}" r="1.7"/>`).join("");
-  const fmt=ms=>new Date(ms).toLocaleDateString("en-GB",{day:"2-digit",month:"short"});
-  const last=series[series.length-1];
-  return `<svg class="tsc" viewBox="0 0 ${o.w} ${o.h}" role="img"
-      aria-label="displacement time series, ${series.length} acquisitions">
-    <line class="ax" x1="${o.pad.l}" y1="${Y(0)}" x2="${o.w-o.pad.r}" y2="${Y(0)}"/>
-    <text class="tl" x="${o.pad.l-4}" y="${Y(hi)+4}" text-anchor="end">${hi.toFixed(0)}</text>
-    <text class="tl" x="${o.pad.l-4}" y="${Y(0)+3}" text-anchor="end">0</text>
-    <text class="tl" x="${o.pad.l-4}" y="${Y(lo)}" text-anchor="end">${lo.toFixed(0)}</text>
-    <path class="ts" d="${path}"/>
-    <g class="tp">${dots}</g>
-    <text class="tl" x="${o.pad.l}" y="${o.h-5}">${fmt(t0)}</text>
-    <text class="tl" x="${o.w-o.pad.r}" y="${o.h-5}" text-anchor="end">${fmt(t1)}</text>
-    <text class="tv" x="${o.w-o.pad.r}" y="${Math.max(12,Y(v[v.length-1])-6)}"
-      text-anchor="end">${last.v>0?"+":""}${(last.v*o.scale).toFixed(0)} ${o.unit}</text>
+  const p=(hi-lo)*0.12||0.001; lo-=p; hi+=p;
+  const X=x=>pad.l+(x-dom[0])/(dom[1]-dom[0]||1)*(o.w-pad.l-pad.r);
+  const Y=y=>pad.t+(hi-y)/(hi-lo||1)*(o.h-pad.t-pad.b);
+  const vis=series.map((s,i)=>i).filter(i=>t[i]>=dom[0]-1 && t[i]<=dom[1]+1);
+  const d=vis.map((i,k)=>`${k?"L":"M"}${X(t[i]).toFixed(1)},${Y(v[i]).toFixed(1)}`).join("");
+
+  let g="";
+  for(const yv of niceTicks(lo,hi,4)){
+    g+=`<line class="gr" x1="${pad.l}" y1="${Y(yv).toFixed(1)}" x2="${o.w-pad.r}" y2="${Y(yv).toFixed(1)}"/>`
+     + `<text class="tl" x="${pad.l-5}" y="${(Y(yv)+3).toFixed(1)}" text-anchor="end">${yv.toFixed(3)}</text>`;
+  }
+  let xl="";
+  if(o.dates){
+    xl=vis.map(i=>`<text class="tl rot" transform="translate(${X(t[i]).toFixed(1)},${o.h-pad.b+12}) rotate(-58)">${fmtDay(t[i])}</text>`).join("");
+  }else{
+    xl=`<text class="tl" x="${pad.l}" y="${o.h-pad.b+14}">${fmtDay(dom[0])}</text>`
+      +`<text class="tl" x="${o.w-pad.r}" y="${o.h-pad.b+14}" text-anchor="end">${fmtDay(dom[1])}</text>`;
+  }
+  const titles=o.titles
+    ? `<text class="at" transform="translate(13,${(pad.t+(o.h-pad.t-pad.b)/2).toFixed(1)}) rotate(-90)" text-anchor="middle">Displacement (m)</text>`
+      + `<text class="at" x="${(pad.l+(o.w-pad.l-pad.r)/2).toFixed(1)}" y="${o.h-3}" text-anchor="middle">Date</text>`
+    : "";
+  return `<svg class="tsc ${o.cls}" viewBox="0 0 ${o.w} ${o.h}" preserveAspectRatio="xMidYMid meet"
+      role="img" aria-label="displacement time series, ${series.length} acquisitions">
+    ${g}
+    <line class="ax" x1="${pad.l}" y1="${Y(0).toFixed(1)}" x2="${o.w-pad.r}" y2="${Y(0).toFixed(1)}"/>
+    <line class="fr" x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${o.h-pad.b}"/>
+    <line class="fr" x1="${pad.l}" y1="${o.h-pad.b}" x2="${o.w-pad.r}" y2="${o.h-pad.b}"/>
+    <path class="ts" d="${d}"/>
+    <g class="tp">${vis.map(i=>`<circle cx="${X(t[i]).toFixed(1)}" cy="${Y(v[i]).toFixed(1)}" r="${o.dates?2.6:1.9}"/>`).join("")}</g>
+    ${xl}${titles}
   </svg>`;
 }
+
+/* ---- the large, interactive view ---- */
+function closeChartFrame(){ if(chartFrame){ chartFrame.remove(); chartFrame=null; } }
+
+function openChartFrame(all, key, caption){
+  closeChartFrame();
+  const keys=Object.keys(all);
+  let k = keys.includes(key) ? key : keys[0];
+  const wrap=document.createElement("div");
+  wrap.className="chart-frame";
+  wrap.innerHTML=`<div class="chart-bar">
+      <span class="st">Time series</span>
+      <span class="cap"></span>
+      <span class="sp">
+        ${keys.length>1?`<span class="ob">${keys.map(x=>
+          `<button type="button" data-o="${x}">${x==="asc"?"Ascending":x==="desc"?"Descending":x}</button>`
+        ).join("")}</span>`:""}
+        <button type="button" data-reset>reset zoom</button>
+        <button type="button" data-close aria-label="Close">&times; close</button>
+      </span>
+    </div>
+    <div class="chart-body"></div>
+    <p class="chart-hint">scroll to zoom \u00b7 drag to pan \u00b7 hover for a value</p>`;
+  const body=wrap.querySelector(".chart-body");
+  const cap=wrap.querySelector(".cap");
+  let dom=null, hover=null;
+
+  const draw=()=>{
+    const S=all[k].series;
+    const t=S.map(p=>Date.parse(p.d));
+    if(!dom) dom=[Math.min(...t),Math.max(...t)];
+    const W=Math.max(420, body.clientWidth||760), H=Math.max(240, body.clientHeight||360);
+    body.innerHTML=seriesChart(S,{w:W,h:H,dates:true,titles:true,cls:"big",dom});
+    cap.textContent=caption||"";
+    const svg=body.querySelector("svg");
+    if(!svg) return;
+    // readout: nearest acquisition to the pointer
+    svg.addEventListener("mousemove",ev=>{
+      const r=svg.getBoundingClientRect();
+      const fx=(ev.clientX-r.left)/r.width*W;
+      let best=0, bd=1e9;
+      const pad={l:52,r:10};
+      S.forEach((p,i)=>{
+        const x=pad.l+(Date.parse(p.d)-dom[0])/(dom[1]-dom[0])*(W-pad.l-pad.r);
+        const d=Math.abs(x-fx); if(d<bd){bd=d;best=i;}
+      });
+      const p=S[best];
+      cap.textContent=`${fmtFull(Date.parse(p.d))}   ${p.v>0?"+":""}${p.v.toFixed(4)} m`;
+    });
+    svg.addEventListener("mouseleave",()=>{ cap.textContent=caption||""; });
+    svg.addEventListener("wheel",ev=>{
+      ev.preventDefault();
+      const r=svg.getBoundingClientRect();
+      const f=(ev.clientX-r.left)/r.width;
+      const at=dom[0]+f*(dom[1]-dom[0]);
+      const z=ev.deltaY>0?1.25:0.8;
+      const span=Math.max(6*864e5,(dom[1]-dom[0])*z);
+      dom=[at-(at-dom[0])*z, at+(dom[1]-at)*z];
+      if(dom[1]-dom[0]<span){ const c=(dom[0]+dom[1])/2; dom=[c-span/2,c+span/2]; }
+      draw();
+    },{passive:false});
+    let drag=null;
+    svg.addEventListener("mousedown",ev=>{ drag={x:ev.clientX,d0:dom.slice()}; });
+    window.addEventListener("mouseup",()=>{ drag=null; });
+    svg.addEventListener("mousemove",ev=>{
+      if(!drag) return;
+      const r=svg.getBoundingClientRect();
+      const shift=(drag.x-ev.clientX)/r.width*(drag.d0[1]-drag.d0[0]);
+      dom=[drag.d0[0]+shift, drag.d0[1]+shift];
+      draw();
+    });
+  };
+  wrap.querySelector("[data-close]").addEventListener("click",closeChartFrame);
+  wrap.querySelector("[data-reset]").addEventListener("click",()=>{ dom=null; draw(); });
+  wrap.querySelectorAll("[data-o]").forEach(b=>b.addEventListener("click",()=>{
+    k=b.dataset.o; dom=null;
+    wrap.querySelectorAll("[data-o]").forEach(o=>o.setAttribute("aria-pressed",String(o===b)));
+    draw();
+  }));
+  mapWrap.appendChild(wrap);
+  chartFrame=wrap;
+  draw();
+}
+
+/* clicking the small chart in a popup opens the large one */
+document.addEventListener("click",e=>{
+  const svg=e.target.closest && e.target.closest(".pc .tsc");
+  if(!svg || svg.classList.contains("big")) return;
+  const src=svg.getAttribute("data-src");
+  if(src && CHART_DATA[src]) openChartFrame(CHART_DATA[src], switchKey, svg.getAttribute("data-cap"));
+});
 
 /* Lithologic fill patterns, after the conventions in FGDC-STD-013-2006:
    brick for carbonates, ovals for conglomerate, dash-and-line for flysch,
@@ -1166,7 +1314,6 @@ function markerIcon(shape, fill, stroke){
   }catch(e){ return null; }
 }
 
-const CHART_DATA={};   // url -> parsed series, fetched once per layer
 const POLY=["match",["geometry-type"],["Polygon","MultiPolygon"],true,false];
 const LINE=["match",["geometry-type"],["LineString","MultiLineString"],true,false];
 const PT  =["match",["geometry-type"],["Point","MultiPoint"],true,false];
@@ -1280,8 +1427,12 @@ async function addSpec(spec,i,key){
           if(spec.popupChart && CHART_DATA[spec.popupChart]){
             const all=CHART_DATA[spec.popupChart];
             const set=all[switchKey] || all[Object.keys(all)[0]];
-            if(set && set.series) head2=seriesChart(set.series,{unit:"mm"})
-              + (spec.popupCaption?`<p class="pcap">${spec.popupCaption}</p>`:"");
+            if(set && set.series){
+              const cap=spec.popupCaption||"";
+              head2=seriesChart(set.series,{w:340,h:200,titles:true})
+                    .replace("<svg ", `<svg data-src="${spec.popupChart}" data-cap="${cap}" `)
+                  + `<p class="pcap">click the plot to open it larger${cap?" \u00b7 "+cap:""}</p>`;
+            }
           }
           // popupImgWhen:["prop","value"] limits the image to matching features,
           // so a shared layer can hold points that do and do not have a plot
@@ -1594,10 +1745,10 @@ let switchKey=null;   // which option a `switch` layer is showing
 let sceneBtn=null, sceneFrame=null;
 
 let tomoBox=null;
-function clearTomo(){ if(tomoBox){ tomoBox.remove(); tomoBox=null; } }
+function clearTomo(){ if(tomoBox){ tomoBox.remove(); tomoBox=null; } closeChartFrame(); }
 function closeScene(){ if(sceneFrame){ sceneFrame.remove(); sceneFrame=null; } }
 function clearScene(){ closeScene(); clearTomo(); if(sceneBtn){ sceneBtn.remove(); sceneBtn=null; } }
-document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeScene(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ closeChartFrame(); closeScene(); } });
 
 function showSceneLaunch(sc){
   const b=document.createElement("button");
