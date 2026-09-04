@@ -333,6 +333,19 @@
      chart highlights the axis text instead of panning */
   .chart-body{user-select:none;-webkit-user-select:none}
   .chart-body svg text{pointer-events:none}
+  .chart-body{position:relative}
+  .tsc .hit circle{fill:transparent;stroke:none}
+  .tsc .hl circle{fill:none;stroke:#fff;stroke-width:1.8}
+  .tsc .hl line{stroke:#fff;stroke-width:.7;stroke-dasharray:3 3;opacity:.5}
+  .chart-tip{position:absolute;z-index:3;pointer-events:none;min-width:154px;
+    background:rgba(8,12,18,.94);border:1px solid var(--line);border-radius:6px;
+    padding:8px 10px;font-family:"IBM Plex Mono",monospace;font-size:10px;
+    color:var(--text-dim);box-shadow:0 6px 18px rgba(0,0,0,.5);line-height:1.5}
+  .chart-tip b{display:block;color:var(--gold);font-weight:500;margin-bottom:4px;
+    font-size:10.5px}
+  .chart-tip span{display:block}
+  .chart-tip em{color:#eaf2ff;font-style:normal}
+  .chart-tip .ix{color:#4d5a6b;margin-top:3px}
   .chart-hint{flex:0 0 auto;margin:0;padding:5px 0 9px;text-align:center;
     font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:#5a6a7d;letter-spacing:.06em}
   .pc .pcap{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:#5a6a7d;
@@ -793,7 +806,7 @@ const STORY = [
                tick labels and gridlines, curve sampled at Sentinel-1's 6-day
                repeat. Drawn live, so it follows the selected orbit. */
             popupChart:"CumbreVieja/cv_series.json",
-            popupCaption:"LOS displacement, mm \u00b7 digitised from the SBAS inset",
+            popupCaption:"LOS displacement \u00b7 digitised from the SBAS inset",
             popup:[ ["note","Role"], ["coords","Position"] ] }
         ],
         camera:{center:[-17.869,28.640], zoom:10.4, pitch:0, bearing:0, speed:3.4},
@@ -804,7 +817,7 @@ const STORY = [
           groupLabel:"Symbols",
           items:[ ["#ffffff","Scatterer with time series","dot"],
                   ["#e8b15e","Reference area, assumed stable","star"] ],
-          note:"LOS deformation \u00b7 eruption began 19 Sep 2021, three days after the last acquisition"} },
+          note:"LOS deformation, cm \u00b7 eruption 19 Sep 2021, after the last acquisition in both stacks"} },
       { name:"precise-mtinsar",
         body:`A parallelised, GPU-aware Python package for multi-temporal InSAR
               processing, shipped with a synthetic demo dataset.` }
@@ -812,52 +825,77 @@ const STORY = [
 
   { tag:"Now", name:"GETMAP", title:"GIS &amp; Remote Sensing Engineer at GET",
     coords:[37.9446111,23.6791036], zoom:12.5, marker:true,
-    body:`At Geospatial Enabling Technologies, building spatial data infrastructure
-          and the tooling around it — and currently learning photogrammetry.</a>`,
-    pop:`Building spatial data infrastructure & internal tooling. Now learning photogrammetry.`,
+    body:`GIS and Remote Sensing Engineer at Geospatial Enabling Technologies. My
+          work centres on the maintenance and customisation of client spatial data
+          infrastructures, delivered through GET SDI Portal and built on PostGIS,
+          GeoServer, GeoNetwork and pycsw. Alongside this I develop internal
+          automation software in Python, and have recently begun working with the
+          company's mobile mapping instrumentation.`,
+    pop:`Maintenance and customisation of client spatial data infrastructures.`,
     logo:{src:"logos/get.png", alt:"Geospatial Enabling Technologies",
           link:"https://www.getmap.eu/", white:false, h:100},
     moreLabel:"Projects",
     projects:[
-      { name:"Municipal spatial data infrastructure",
-        body:`Design and operation of PostGIS / GeoServer / GeoNetwork stacks for
-              Palaio Faliro, Chalandri, Oraiokastro, Naxos and Kalamata — data models,
-              cartographic styling, web viewers and INSPIRE-compliant metadata.`,
+      { name:"Client spatial data infrastructures", when:"Core responsibility",
+        body:`Maintenance and customisation of the spatial data infrastructures on
+              which clients operate. The work spans the stack beneath the portal:
+              PostGIS data models, service publication through GeoServer, catalogue
+              management in GeoNetwork and pycsw, field data capture via QGIS and
+              QFieldCloud, and format and coordinate-system conversion with GDAL.
+              Responsibilities include data modelling, layer publication,
+              cartographic styling, and user and permission management. Clients
+              comprise municipalities and Regions (\u03a0\u03b5\u03c1\u03b9\u03c6\u03ad\u03c1\u03b5\u03b9\u03b5\u03c2),
+              departments of ministries, and private companies.`,
+        // NOTE: these five names are a placeholder of mine, not something you
+        // confirmed. Replace them, or remove `layer` and `legend` to leave this
+        // project without a map layer.
         layer:{type:"geojson", data:MUNICIPALITIES, color:"#e8b15e"},
         legend:{title:"Clients", items:[["#e8b15e","Municipality served"]]} },
-      { name:"GET-Suite",
-        body:`A set of standalone PyQt6 desktop tools that automate the repetitive
-              parts of the workflow and run quality checks on data and published services.` },
-      { name:"GIMM — metadata manager",
-        body:`Desktop application bridging GeoServer and GeoNetwork so layer publication
-              and INSPIRE metadata stay in step, with validation before anything is committed.` },
-      { name:"Road asset survey pipeline",
-        body:`Mobile road-survey observations pulled from the Vaisala RoadAI API, converted
-              to GeoJSON, snapped to road centrelines and rendered as per-class traffic-sign
-              layers in MapLibre and Folium.` },
-      { name:"Urban environmental indicators",
-        body:`Vegetation cover, land surface temperature and outdoor thermal comfort mapped
-              from Sentinel-2, Landsat 8/9 and ECOSTRESS, with SOLWEIG/UMEP modelling.` },
-      { name:"Field data capture",
-        body:`Self-hosted QFieldCloud deployment and QField project configuration for
-              surveyors working offline.` }
+      { name:"GET SDI Portal", when:"Platform",
+        body:`The company's web portal for spatial data delivery: at present a
+              JavaScript and PHP front-end served by the infrastructure above, with
+              a full-stack redevelopment in progress. I configure and customise
+              deployments per client, and integrate the published services and
+              catalogue records they draw on.` },
+      { name:"Internal automation software", when:"Ongoing",
+        body:`Python tooling developed to automate recurring tasks in the above:
+              service publication and catalogue maintenance, quality assurance
+              checks, format and coordinate conversion, and data ingestion.
+              Delivered as command-line utilities, and as PyQt6 desktop
+              applications where colleagues require a graphical interface.
+              Proprietary software, used internally.` },
+      { name:"Mobile mapping", when:"Recent",
+        body:`Familiarisation with the company's mobile mapping instrumentation:
+              Trimble MX7 for vehicle-based 360\u00b0 imagery, Gexcel Heron for
+              handheld SLAM scanning, Trimble Catalyst DA2 for software-defined
+              GNSS positioning, and Vaisala RoadAI for road condition and asset
+              survey \u2014 together with the processing required to bring their
+              output into the infrastructure.` },
+      { name:"Fire detection from Sentinel-2", when:"Occasional",
+        body:`Identification and delineation of active fires and burned areas from
+              Sentinel-2 imagery.` }
     ],
     details:[
-      ["Focus","Spatial data infrastructure · remote sensing · desktop tooling"],
-      ["Learning","Photogrammetry — UAV survey planning through to dense point clouds"]
+      ["Platform","GET SDI Portal \u2014 JavaScript and PHP front-end; full-stack redevelopment in progress"],
+      ["Stack","PostGIS \u00b7 GeoServer \u00b7 GeoNetwork \u00b7 pycsw \u00b7 QGIS \u00b7 QFieldCloud \u00b7 GDAL"],
+      ["Automation","Python \u00b7 PyQt6"],
+      ["Clients","Municipalities \u00b7 Regions (\u03a0\u03b5\u03c1\u03b9\u03c6\u03ad\u03c1\u03b5\u03b9\u03b5\u03c2) \u00b7 departments of ministries \u00b7 private sector"],
+      ["Mobile mapping","Trimble MX7 \u00b7 Gexcel Heron \u00b7 Trimble Catalyst DA2 \u00b7 Vaisala RoadAI"],
+      ["Also","Internal network support"]
     ] },
-
   { tag:"Toolbox", name:"THE STACK", title:"How the work gets built",
     coords:[37.985,23.730], zoom:10.5,
-    body:`A self-hosted, open-source geospatial pipeline — from the database to the
-          field app to the desktop tools I write.`,
-    stack:["PostGIS","GeoServer","GeoNetwork","QGIS","QFieldCloud","Python","PyQt6","Docker","SQL"],
+    body:`An open-source geospatial pipeline \u2014 from the database, through the
+          services and the catalogue, out to the field app, with Python doing the
+          parts nobody should do twice.`,
+    stack:["PostGIS","GeoServer","GeoNetwork","pycsw","QGIS","QFieldCloud","GDAL","Python","PyQt6"],
     moreLabel:"By layer",
     details:[
       ["Data","PostgreSQL / PostGIS · GDAL · EPSG:2100 (EGSA87) as the working grid"],
-      ["Services","GeoServer (WMS / WFS-T / WMTS) · GeoNetwork · GeoServer ACL"],
-      ["Desktop","QGIS · custom PyQt6 applications"],
-      ["Field","QField · self-hosted QFieldCloud"],
+      ["Services","GeoServer — WMS / WFS / WMTS"],
+      ["Catalogue","GeoNetwork · pycsw"],
+      ["Desktop","QGIS \u00b7 in-house PyQt6 tools"],
+      ["Field","QField · QFieldCloud"],
       ["Remote sensing","SNAP · ISCE2 · MintPy · UMEP / SOLWEIG · rasterio · GDAL"],
       ["Web","MapLibre GL JS · OpenLayers · Folium · Leaflet"],
       ["Infrastructure","Docker · nginx · Linux · WireGuard · self-hosted on ARM64"]
@@ -1097,6 +1135,15 @@ function bboxOf(gj){
    opens the same data large, over the map, with zoom, pan and a readout. Both
    plot on a real time axis so an uneven acquisition gap stays a gap. */
 
+/* Series are stored in metres, as digitised. DISP is the only place the
+   display unit is decided: change k and the axis, ticks, tooltip and header
+   readout all follow. Rates elsewhere stay in mm/yr, which is the convention
+   for a velocity rather than a displacement. */
+/* dp:1 in cm is one millimetre - the finest figure the data supports. The
+   series were read off a raster plot, so pixel quantisation alone is around
+   half a millimetre; showing 0.01 cm would be false precision. */
+const DISP={unit:"cm", k:100, dp:1, tickdp:1};
+
 const CHART_DATA={};      // url -> parsed series, fetched once per layer
 /* Marked on every displacement chart. The Cumbre Vieja fissure opened at
    14:13 UTC on 19 September 2021, after the last acquisition in both stacks. */
@@ -1159,7 +1206,7 @@ function seriesChart(series, opts){
   let g="";
   for(const yv of niceTicks(lo,hi,4)){
     g+=`<line class="gr" x1="${pad.l}" y1="${Y(yv).toFixed(1)}" x2="${o.w-pad.r}" y2="${Y(yv).toFixed(1)}"/>`
-     + `<text class="tl" x="${pad.l-5}" y="${(Y(yv)+3).toFixed(1)}" text-anchor="end">${yv.toFixed(3)}</text>`;
+     + `<text class="tl" x="${pad.l-5}" y="${(Y(yv)+3).toFixed(1)}" text-anchor="end">${(yv*DISP.k).toFixed(DISP.tickdp)}</text>`;
   }
   let xl="";
   if(o.dates){
@@ -1169,7 +1216,7 @@ function seriesChart(series, opts){
       +`<text class="tl" x="${o.w-pad.r}" y="${o.h-pad.b+14}" text-anchor="end">${fmtDay(dom[1])}</text>`;
   }
   const titles=o.titles
-    ? `<text class="at" transform="translate(13,${(pad.t+(o.h-pad.t-pad.b)/2).toFixed(1)}) rotate(-90)" text-anchor="middle">Displacement (m)</text>`
+    ? `<text class="at" transform="translate(13,${(pad.t+(o.h-pad.t-pad.b)/2).toFixed(1)}) rotate(-90)" text-anchor="middle">Displacement (${DISP.unit})</text>`
       + `<text class="at" x="${(pad.l+(o.w-pad.l-pad.r)/2).toFixed(1)}" y="${o.h-3}" text-anchor="middle">Date</text>`
     : "";
   // detection threshold and the first sustained crossing
@@ -1203,7 +1250,16 @@ function seriesChart(series, opts){
       + `<text class="evt" x="${x.toFixed(1)}" y="${pad.t-2}" text-anchor="${
            x>o.w*0.7?"end":"middle"}">${e.label}</text>`;
   }
+  // Pixel positions are written onto the element so hover can find the nearest
+  // point and move the highlight without re-rendering the chart.
+  const pts=vis.map(i=>[+X(t[i]).toFixed(1), +Y(v[i]).toFixed(1), i]);
+  const hitg=o.hover
+    ? `<g class="hit">${pts.map(([x,y,i])=>
+        `<circle cx="${x}" cy="${y}" r="9" data-i="${i}"/>`).join("")}</g>`
+      + `<g class="hl" style="display:none"><line y1="${pad.t}" y2="${o.h-pad.b}"/><circle r="5"/></g>`
+    : "";
   return `<svg class="tsc ${o.cls}" viewBox="0 0 ${o.w} ${o.h}" preserveAspectRatio="xMidYMid meet"
+      data-pts='${JSON.stringify(pts)}'
       role="img" aria-label="displacement time series, ${series.length} acquisitions${
         ev.length?", with "+ev.map(e=>e.label).join(" and "):""}">
     ${g}${evg}
@@ -1212,7 +1268,7 @@ function seriesChart(series, opts){
     <line class="fr" x1="${pad.l}" y1="${o.h-pad.b}" x2="${o.w-pad.r}" y2="${o.h-pad.b}"/>
     <path class="ts" d="${d}"/>
     <g class="tp">${vis.map(i=>`<circle cx="${X(t[i]).toFixed(1)}" cy="${Y(v[i]).toFixed(1)}" r="${o.dates?2.6:1.9}"/>`).join("")}</g>
-    ${xl}${titles}
+    ${xl}${titles}${hitg}
   </svg>`;
 }
 
@@ -1234,7 +1290,8 @@ function openChartFrame(all, key, caption){
       <span class="cap"></span>
       <span class="sp">
         ${keys.length>1?`<span class="ob">${keys.map(x=>
-          `<button type="button" data-o="${x}">${x==="asc"?"Ascending":x==="desc"?"Descending":x}</button>`
+          `<button type="button" data-o="${x}" aria-pressed="${x===k}">${
+            x==="asc"?"Ascending":x==="desc"?"Descending":x}</button>`
         ).join("")}</span>`:""}
         <button type="button" data-reset>reset zoom</button>
         <button type="button" data-close aria-label="Close">&times; close</button>
@@ -1245,13 +1302,19 @@ function openChartFrame(all, key, caption){
   const body=wrap.querySelector(".chart-body");
   const cap=wrap.querySelector(".cap");
   let dom=null, drag=null;
+  const tip=document.createElement("div");
+  tip.className="chart-tip";
+  tip.style.display="none";
   function onMove(ev){
     if(!drag){
-      if(!body.contains(ev.target)) return;
-      const p=nearest(ev.clientX);
-      if(p) cap.textContent=`${fmtFull(Date.parse(p.d))}   ${p.v>0?"+":""}${p.v.toFixed(4)} m`;
+      // ev.target is not always an element (a synthetic event on window is not),
+      // and body.contains() throws on anything that is not a Node
+      const tgt=ev.target;
+      if(!tgt || tgt.nodeType!==1 || !body.contains(tgt)) return;
+      showTip(ev.clientX, ev.clientY);
       return;
     }
+    hideTip();
     const g=geom(); if(!g) return;
     const shift=(drag.x-ev.clientX)/g.r.width*(drag.d0[1]-drag.d0[0]);
     dom=[drag.d0[0]+shift, drag.d0[1]+shift];
@@ -1271,7 +1334,8 @@ function openChartFrame(all, key, caption){
     }
     const W=Math.max(420, body.clientWidth||760), H=Math.max(240, body.clientHeight||360);
     body.innerHTML=seriesChart(S,{w:W,h:H,dates:true,titles:true,cls:"big",dom,
-                                  events:CHART_EVENTS, detect:CHART_DETECT});
+                                  events:CHART_EVENTS, detect:CHART_DETECT, hover:true});
+    body.appendChild(tip);
     cap.textContent=drag ? cap.textContent : (caption||"");
   };
 
@@ -1284,16 +1348,51 @@ function openChartFrame(all, key, caption){
     const svg=body.querySelector("svg");
     return svg ? {r:svg.getBoundingClientRect(), W:+svg.viewBox.baseVal.width} : null;
   };
-  const nearest=cx=>{
-    const g=geom(); if(!g) return null;
-    const S=all[k].series, pad={l:52,r:10};
-    const fx=(cx-g.r.left)/g.r.width*g.W;
-    let best=0, bd=1e9;
-    S.forEach((p,i)=>{
-      const x=pad.l+(Date.parse(p.d)-dom[0])/(dom[1]-dom[0])*(g.W-pad.l-pad.r);
-      const d=Math.abs(x-fx); if(d<bd){bd=d;best=i;}
-    });
-    return S[best];
+  /* Nearest point from the pixel positions the chart wrote onto itself, so the
+     hit test cannot drift out of step with what is drawn. */
+  const nearest=(cx,cy)=>{
+    const svg=body.querySelector("svg");
+    if(!svg) return null;
+    let pts;
+    try{ pts=JSON.parse(svg.getAttribute("data-pts")||"[]"); }catch(e){ return null; }
+    if(!pts.length) return null;
+    const r=svg.getBoundingClientRect();
+    const W=+svg.viewBox.baseVal.width, H=+svg.viewBox.baseVal.height;
+    const fx=(cx-r.left)/r.width*W, fy=(cy-r.top)/r.height*H;
+    let best=pts[0], bd=Infinity;
+    for(const p of pts){
+      const d=Math.abs(p[0]-fx) + Math.abs(p[1]-fy)*0.15;   // favour the x axis
+      if(d<bd){ bd=d; best=p; }
+    }
+    return {px:best[0], py:best[1], i:best[2], svg, W, H, r};
+  };
+
+  const showTip=(cx,cy)=>{
+    const n=nearest(cx,cy);
+    if(!n){ tip.style.display="none"; return; }
+    const S=all[k].series, p=S[n.i];
+    const hl=n.svg.querySelector(".hl");
+    if(hl){
+      hl.style.display="";
+      hl.querySelector("circle").setAttribute("cx",n.px);
+      hl.querySelector("circle").setAttribute("cy",n.py);
+      const ln=hl.querySelector("line");
+      ln.setAttribute("x1",n.px); ln.setAttribute("x2",n.px);
+    }
+    tip.innerHTML=`<b>${fmtFull(Date.parse(p.d))}</b>`
+      + `<span>displacement <em>${p.v>0?"+":""}${(p.v*DISP.k).toFixed(DISP.dp)} ${DISP.unit}</em></span>`
+      + `<span class="ix">acquisition ${n.i+1} of ${S.length}</span>`;
+    tip.style.display="block";
+    // keep it inside the frame
+    const bw=body.clientWidth||760, x=n.px/n.W*bw;
+    tip.style.left=Math.min(Math.max(x+14,8), Math.max(8,bw-tip.offsetWidth-8))+"px";
+    tip.style.top=Math.max(6, n.py/n.H*(body.clientHeight||360)-46)+"px";
+    cap.textContent=`${fmtFull(Date.parse(p.d))}   ${p.v>0?"+":""}${(p.v*DISP.k).toFixed(DISP.dp)} ${DISP.unit}`;
+  };
+  const hideTip=()=>{
+    tip.style.display="none";
+    const hl=body.querySelector(".hl"); if(hl) hl.style.display="none";
+    cap.textContent=caption||"";
   };
 
   body.addEventListener("mousedown",ev=>{
@@ -1304,7 +1403,7 @@ function openChartFrame(all, key, caption){
   window.addEventListener("mousemove",onMove);
   window.addEventListener("mouseup",onUp);
 
-  body.addEventListener("mouseleave",()=>{ if(!drag) cap.textContent=caption||""; });
+  body.addEventListener("mouseleave",()=>{ if(!drag) hideTip(); });
   body.addEventListener("wheel",ev=>{
     const g=geom(); if(!g) return;
     ev.preventDefault();
@@ -1338,7 +1437,9 @@ document.addEventListener("click",e=>{
   const svg=e.target.closest && e.target.closest(".pc .tsc");
   if(!svg || svg.classList.contains("big")) return;
   const src=svg.getAttribute("data-src");
-  if(src && CHART_DATA[src]) openChartFrame(CHART_DATA[src], switchKey, svg.getAttribute("data-cap"));
+  if(src && CHART_DATA[src])
+    openChartFrame(CHART_DATA[src], svg.getAttribute("data-orbit") || switchKey,
+                   svg.getAttribute("data-cap"));
 });
 
 /* Lithologic fill patterns, after the conventions in FGDC-STD-013-2006:
@@ -1537,9 +1638,13 @@ async function addSpec(spec,i,key){
             const set=all[switchKey] || all[Object.keys(all)[0]];
             if(set && set.series){
               const cap=spec.popupCaption||"";
+              // record the orbit on the element: the enlarged view then opens on
+              // the series that was actually clicked, rather than guessing
+              const okey=Object.keys(all).find(x=>all[x]===set) || "";
               head2=seriesChart(set.series,{w:340,h:200,titles:true,events:CHART_EVENTS,
                                            detect:CHART_DETECT})
-                    .replace("<svg ", `<svg data-src="${spec.popupChart}" data-cap="${cap}" `)
+                    .replace("<svg ", `<svg data-src="${spec.popupChart}" data-cap="${cap}" `
+                                      + `data-orbit="${okey}" `)
                   + `<p class="pcap">click the plot to open it larger${cap?" \u00b7 "+cap:""}</p>`;
             }
           }
