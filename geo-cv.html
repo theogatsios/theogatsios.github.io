@@ -883,23 +883,6 @@ const STORY = [
       ["Mobile mapping","Trimble MX7 \u00b7 Gexcel Heron \u00b7 Trimble Catalyst DA2 \u00b7 Vaisala RoadAI"],
       ["Also","Internal network support"]
     ] },
-  { tag:"Toolbox", name:"THE STACK", title:"How the work gets built",
-    coords:[37.985,23.730], zoom:10.5,
-    body:`An open-source geospatial pipeline \u2014 from the database, through the
-          services and the catalogue, out to the field app, with Python doing the
-          parts nobody should do twice.`,
-    stack:["PostGIS","GeoServer","GeoNetwork","pycsw","QGIS","QFieldCloud","GDAL","Python","PyQt6"],
-    moreLabel:"By layer",
-    details:[
-      ["Data","PostgreSQL / PostGIS · GDAL · EPSG:2100 (EGSA87) as the working grid"],
-      ["Services","GeoServer — WMS / WFS / WMTS"],
-      ["Catalogue","GeoNetwork · pycsw"],
-      ["Desktop","QGIS \u00b7 in-house PyQt6 tools"],
-      ["Field","QField · QFieldCloud"],
-      ["Remote sensing","SNAP · ISCE2 · MintPy · UMEP / SOLWEIG · rasterio · GDAL"],
-      ["Web","MapLibre GL JS · OpenLayers · Folium · Leaflet"],
-      ["Infrastructure","Docker · nginx · Linux · WireGuard · self-hosted on ARM64"]
-    ] },
 
   { tag:"Beyond work", name:"HELMOS", title:"Astronomy, astrophotography &amp; the deep blue",
     coords:[37.985,22.203], zoom:9.5, marker:true,
