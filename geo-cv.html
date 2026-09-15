@@ -481,15 +481,6 @@
    for real URLs — templates for COG / WMS / XYZ / image are at the bottom of
    this script. Anything GeoJSON must be WGS84, not EPSG:2100.
    -------------------------------------------------------------------------- */
-const MUNICIPALITIES={type:"FeatureCollection",features:[
-  ["Oraiokastro",     22.92317, 40.72545],
-  ["Aigaleo",         23.67812, 37.99244],
-  ["Maroussi",        23.80741, 38.04631],
-  ["Kalamata",        22.09533, 37.07378],
-  ["Irakleio",        25.14213, 35.33867]   // Heraklion, Crete
-].map(([name,lng,lat])=>({type:"Feature",properties:{name},
-  geometry:{type:"Point",coordinates:[lng,lat]}}))};
-
 const LA_PALMA_AOI={type:"FeatureCollection",features:[{
   type:"Feature",properties:{name:"Cumbre Vieja — processing extent"},
   geometry:{type:"Polygon",coordinates:[[
@@ -846,9 +837,23 @@ const STORY = [
               cartographic styling, and user and permission management. Clients
               comprise municipalities and Regions (\u03a0\u03b5\u03c1\u03b9\u03c6\u03ad\u03c1\u03b5\u03b9\u03b5\u03c2),
               departments of ministries, and private companies.`,
-        layer:{type:"geojson", data:MUNICIPALITIES, color:"#e8b15e"},
-        legend:{title:"Clients", items:[["#e8b15e","Municipality served"]]},
-        status:"5 municipalities on the map" },
+        /* Administrative boundaries supplied from the company's own client
+           layer, reprojected from EPSG:2100. Irakleio is carried as a point
+           until its polygon is available; the engine filters by geometry type,
+           so the two coexist in one layer. */
+        layer:{type:"geojson", data:"clients/get_clients.geojson", color:"#e8b15e",
+          paint:{ fill:{"fill-color":"#e8b15e","fill-opacity":.22},
+                  line:{"line-color":"#e8b15e","line-width":1.4,"line-opacity":.95},
+                  circle:{"circle-radius":5,"circle-color":"#e8b15e",
+                          "circle-opacity":.9,"circle-stroke-width":1.2,
+                          "circle-stroke-color":"#16202b"} },
+          popupTitle:"{name}",
+          popup:[ ["name_gr","\u0394\u03ae\u03bc\u03bf\u03c2"],
+                  ["pop21","Population (2021)"],
+                  ["area","Area"," km\u00b2"] ]},
+        legend:{title:"Clients", items:[
+          ["#e8b15e","Municipality served","box"]]},
+        status:"5 municipalities \u00b7 click a boundary for detail" },
       { name:"GET SDI Portal", when:"Platform",
         body:`The company's web portal for spatial data delivery: at present a
               JavaScript and PHP front-end served by the infrastructure above, with
