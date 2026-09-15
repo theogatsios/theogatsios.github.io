@@ -482,11 +482,11 @@
    this script. Anything GeoJSON must be WGS84, not EPSG:2100.
    -------------------------------------------------------------------------- */
 const MUNICIPALITIES={type:"FeatureCollection",features:[
-  ["Palaio Faliro",23.7047,37.9530],
-  ["Chalandri",    23.7983,38.0219],
-  ["Oraiokastro",  22.9320,40.7450],
-  ["Naxos",        25.3766,37.1036],
-  ["Kalamata",     22.1142,37.0389]
+  ["Oraiokastro",     22.92317, 40.72545],
+  ["Aigaleo",         23.67812, 37.99244],
+  ["Maroussi",        23.80741, 38.04631],
+  ["Kalamata",        22.09533, 37.07378],
+  ["Irakleio",        25.14213, 35.33867]   // Heraklion, Crete
 ].map(([name,lng,lat])=>({type:"Feature",properties:{name},
   geometry:{type:"Point",coordinates:[lng,lat]}}))};
 
@@ -846,11 +846,9 @@ const STORY = [
               cartographic styling, and user and permission management. Clients
               comprise municipalities and Regions (\u03a0\u03b5\u03c1\u03b9\u03c6\u03ad\u03c1\u03b5\u03b9\u03b5\u03c2),
               departments of ministries, and private companies.`,
-        // NOTE: these five names are a placeholder of mine, not something you
-        // confirmed. Replace them, or remove `layer` and `legend` to leave this
-        // project without a map layer.
         layer:{type:"geojson", data:MUNICIPALITIES, color:"#e8b15e"},
-        legend:{title:"Clients", items:[["#e8b15e","Municipality served"]]} },
+        legend:{title:"Clients", items:[["#e8b15e","Municipality served"]]},
+        status:"5 municipalities on the map" },
       { name:"GET SDI Portal", when:"Platform",
         body:`The company's web portal for spatial data delivery: at present a
               JavaScript and PHP front-end served by the infrastructure above, with
