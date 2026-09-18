@@ -837,10 +837,10 @@ const STORY = [
               cartographic styling, and user and permission management. Clients
               comprise municipalities and Regions (\u03a0\u03b5\u03c1\u03b9\u03c6\u03ad\u03c1\u03b5\u03b9\u03b5\u03c2),
               departments of ministries, and private companies.`,
-        /* Administrative boundaries supplied from the company's own client
-           layer, reprojected from EPSG:2100. Irakleio is carried as a point
-           until its polygon is available; the engine filters by geometry type,
-           so the two coexist in one layer. */
+        /* Administrative boundaries from the company's own client layer,
+           reprojected from EPSG:2100 by clients/build.py. Irakleio carries its
+           region because the national layer names the Attica and Crete
+           municipalities identically. */
         layer:{type:"geojson", data:"clients/get_clients.geojson", color:"#e8b15e",
           paint:{ fill:{"fill-color":"#e8b15e","fill-opacity":.22},
                   line:{"line-color":"#e8b15e","line-width":1.4,"line-opacity":.95},
@@ -853,7 +853,7 @@ const STORY = [
                   ["area","Area"," km\u00b2"] ]},
         legend:{title:"Clients", items:[
           ["#e8b15e","Municipality served","box"]]},
-        status:"5 municipalities \u00b7 click a boundary for detail" },
+        status:"5 municipalities \u00b7 430 000 residents" },
       { name:"GET SDI Portal", when:"Platform",
         body:`The company's web portal for spatial data delivery: at present a
               JavaScript and PHP front-end served by the infrastructure above, with
@@ -887,6 +887,103 @@ const STORY = [
       ["Also","Internal network support"]
     ] },
 
+  /* ---------------------------------------------------------------------
+     Peer-reviewed output. Each paper sits on its own study area, so clicking
+     one flies the map there: the Hellenic Volcanic Arc for the volcano work,
+     Athens for the Acropolis, Thiva for the earthquake sequence.
+     --------------------------------------------------------------------- */
+  { tag:"Published", name:"PAPERS", title:"Peer-reviewed publications",
+    coords:[37.9000,23.4500], zoom:7.6, marker:true,
+    body:`Five years of research at Harokopio University and NKUA, working on
+          ground deformation across the Hellenic Volcanic Arc and on the
+          engineering-geological side of remote sensing. Co-author on five
+          peer-reviewed papers, first author on the Methana study.`,
+    pop:`Ground deformation across the Hellenic Volcanic Arc.`,
+    moreLabel:"Publications",
+    projectsLabel:"Peer-reviewed",
+    projects:[
+      { name:"Methana volcano \u2014 MT-InSAR, GNSS and seismicity", when:"2020",
+        body:`Gatsios T., Cigna F., Tapete D., Sakkas V., Pavlou K.,
+              Parcharidis I. \u2014 Copernicus Sentinel-1 MT-InSAR, GNSS and
+              Seismic Monitoring of Deformation Patterns and Trends at the
+              Methana Volcano, Greece. Applied Sciences 10(18), 6445.`,
+        link:"https://doi.org/10.3390/app10186445",
+        status:"first author \u00b7 Applied Sciences",
+        layer:{type:"geojson", color:"#5fd0d8",
+          data:{type:"FeatureCollection",features:[{type:"Feature",
+            properties:{name:"Methana"},
+            geometry:{type:"Point",coordinates:[23.3400,37.6150]}}]},
+          paint:{circle:{"circle-radius":9,"circle-color":"#5fd0d8",
+                         "circle-opacity":.85,"circle-stroke-width":1.4,
+                         "circle-stroke-color":"#0a0f16"}}},
+        camera:{center:[23.3400,37.6150], zoom:11.4, speed:1.2},
+        legend:{title:"Methana", items:[["#5fd0d8","Study area","dot"]]} },
+
+      { name:"Thiva Mw 4.6 earthquake \u2014 geodesy and seismology", when:"2021",
+        body:`Combined Geodetic and Seismological Study of the December 2020
+              Mw = 4.6 Thiva (Central Greece) Shallow Earthquake.
+              Applied Sciences 11(13), 5947. Co-author with Sakkas V. and
+              Parcharidis I.`,
+        link:"https://doi.org/10.3390/app11135947",
+        status:"co-author \u00b7 Applied Sciences",
+        layer:{type:"geojson", color:"#e8b15e",
+          data:{type:"FeatureCollection",features:[{type:"Feature",
+            properties:{name:"Thiva"},
+            geometry:{type:"Point",coordinates:[23.3200,38.3200]}}]},
+          paint:{circle:{"circle-radius":9,"circle-color":"#e8b15e",
+                         "circle-opacity":.85,"circle-stroke-width":1.4,
+                         "circle-stroke-color":"#0a0f16"}}},
+        camera:{center:[23.3200,38.3200], zoom:10.6, speed:1.2},
+        legend:{title:"Thiva", items:[["#e8b15e","Epicentral area","dot"]]} },
+
+      { name:"Acropolis of Athens \u2014 rock instability modelling", when:"2023",
+        body:`Loupasakis C., Tsangaratos P., Gatsios T., Eleftheriou V.,
+              Parcharidis I., Soupios P. \u2014 Investigating the Stability of
+              the Hill of the Acropolis of Athens, Greece, Using Fuzzy Logic and
+              Remote Sensing Techniques. Remote Sensing 15(4), 1067.`,
+        link:"https://doi.org/10.3390/rs15041067",
+        status:"co-author \u00b7 Remote Sensing",
+        layer:{type:"geojson", color:"#f0d9a8",
+          data:{type:"FeatureCollection",features:[{type:"Feature",
+            properties:{name:"Acropolis"},
+            geometry:{type:"Point",coordinates:[23.7257,37.9715]}}]},
+          paint:{circle:{"circle-radius":9,"circle-color":"#f0d9a8",
+                         "circle-opacity":.85,"circle-stroke-width":1.4,
+                         "circle-stroke-color":"#0a0f16"}}},
+        camera:{center:[23.7257,37.9715], zoom:15.2, speed:1.2},
+        legend:{title:"Acropolis Hill", items:[["#f0d9a8","Study area","dot"]]} },
+
+      { name:"Aegina island \u2014 SBAS ground deformation", when:"2024",
+        body:`Kalavrezou I.-E., Castro-Melgar I., Nika D., Gatsios T.,
+              Lalechos S., Parcharidis I. \u2014 Application of Time Series InSAR
+              (SBAS) Method Using Sentinel-1 for Monitoring Ground Deformation of
+              the Aegina Island (Western Edge of Hellenic Volcanic Arc).
+              Land 13(4), 485.`,
+        link:"https://doi.org/10.3390/land13040485",
+        status:"co-author \u00b7 Land",
+        layer:{type:"geojson", color:"#8fe3e9",
+          data:{type:"FeatureCollection",features:[{type:"Feature",
+            properties:{name:"Aegina"},
+            geometry:{type:"Point",coordinates:[23.4300,37.7450]}}]},
+          paint:{circle:{"circle-radius":9,"circle-color":"#8fe3e9",
+                         "circle-opacity":.85,"circle-stroke-width":1.4,
+                         "circle-stroke-color":"#0a0f16"}}},
+        camera:{center:[23.4300,37.7450], zoom:11.2, speed:1.2},
+        legend:{title:"Aegina", items:[["#8fe3e9","Study area","dot"]]} },
+
+      { name:"Methana deformation 2015\u20132019", when:"2020",
+        body:`Conference paper, 3rd International Electronic Conference on
+              Geosciences. Investigating 2015\u20132019 deformation patterns at the
+              Methana volcano using Sentinel-1 MT-InSAR, GNSS/GPS and seismic
+              data.`,
+        link:"https://doi.org/10.3390/IECG2020-08547",
+        status:"first author \u00b7 conference" }
+    ],
+    details:[
+      ["Affiliations","Harokopio University of Athens \u00b7 NKUA \u00b7 with ASI (Italian Space Agency)"],
+      ["Themes","Volcano deformation \u00b7 earthquake geodesy \u00b7 rock instability"],
+      ["Methods","MT-InSAR (PS/SBAS) \u00b7 GNSS \u00b7 seismological data \u00b7 fuzzy logic modelling"]
+    ] },
   { tag:"Beyond work", name:"HELMOS", title:"Astronomy, astrophotography &amp; the deep blue",
     coords:[37.985,22.203], zoom:9.5, marker:true,
     body:`Off the clock I chase dark skies and star trails (see my
