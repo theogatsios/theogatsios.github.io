@@ -763,9 +763,9 @@ const STORY = [
     //meta:`<b>Study area shown — Santorini</b>`,
     pop:`mm-scale ground deformation from satellite radar (PS/DS InSAR).`,
     details:[
-      ["Techniques","Persistent & distributed scatterer InSAR · SBAS · atmospheric phase screen removal · time-series inversion"],
-      ["Software","GAMMA · ISCE2 / topsStack · MintPy · SNAP"],
-      ["Sensors","Sentinel-1 (C-band) · ALOS-2 (L-band)"]
+      ["Techniques","Interferometric Point Target Analysis (IPTA) · Persistent Scatterer Interferometry (PSI) · Small BAseline Subset (SBAS)"],
+      ["Software","GAMMA · SNAP · StaMPS"],
+      ["Sensors","Sentinel-1 (C-band) · TerraSAR-X (X-band)"]
     ],
     projects:[
       { name:"La Palma pre-eruption deformation", when:"2021",
@@ -809,9 +809,6 @@ const STORY = [
           items:[ ["#ffffff","Scatterer with time series","dot"],
                   ["#e8b15e","Reference area, assumed stable","star"] ],
           note:"LOS deformation, cm \u00b7 eruption 19 Sep 2021, after the last acquisition in both stacks"} },
-      { name:"precise-mtinsar",
-        body:`A parallelised, GPU-aware Python package for multi-temporal InSAR
-              processing, shipped with a synthetic demo dataset.` }
     ] },
 
   { tag:"Now", name:"GETMAP", title:"GIS &amp; Remote Sensing Engineer at GET",
