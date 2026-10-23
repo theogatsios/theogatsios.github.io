@@ -851,19 +851,6 @@ const STORY = [
         legend:{title:"Clients", items:[
           ["#e8b15e","Municipality served","box"]]},
         status:"5 municipalities \u00b7 430 000 residents" },
-      { name:"GET SDI Portal", when:"Platform",
-        body:`The company's web portal for spatial data delivery: at present a
-              JavaScript and PHP front-end served by the infrastructure above, with
-              a full-stack redevelopment in progress. I configure and customise
-              deployments per client, and integrate the published services and
-              catalogue records they draw on.` },
-      { name:"Internal automation software", when:"Ongoing",
-        body:`Python tooling developed to automate recurring tasks in the above:
-              service publication and catalogue maintenance, quality assurance
-              checks, format and coordinate conversion, and data ingestion.
-              Delivered as command-line utilities, and as PyQt6 desktop
-              applications where colleagues require a graphical interface.
-              Proprietary software, used internally.` },
       { name:"Mobile mapping", when:"Recent",
         body:`Familiarisation with the company's mobile mapping instrumentation:
               Trimble MX7 for vehicle-based 360\u00b0 imagery, Gexcel Heron for
@@ -871,15 +858,23 @@ const STORY = [
               GNSS positioning, and Vaisala RoadAI for road condition and asset
               survey \u2014 together with the processing required to bring their
               output into the infrastructure.` },
-      { name:"Fire detection from Sentinel-2", when:"Occasional",
-        body:`Identification and delineation of active fires and burned areas from
-              Sentinel-2 imagery.` }
+      { name:"Burned area and Flooded area mapping from the Copernicus Sentinel missions", when:"Occasional",
+        body:`Burned area and flood mapping using Copernicus Sentinel data. 
+              Burn scars and severity were delineated from pre/post-fire Sentinel-2 imagery using spectral indices (dNBR), 
+              while flood extent was mapped from Sentinel-1 SAR through calibration, speckle filtering, terrain correction and backscatter thresholding.` },
+      { name:"Internal automation software", when:"Ongoing",
+        body:`Python tooling developed to automate recurring tasks in the above:
+              service publication and catalogue maintenance, quality assurance
+              checks, format and coordinate conversion, and data ingestion.
+              Delivered as command-line utilities, and as PyQt6 desktop
+              applications where colleagues require a graphical interface.
+              Proprietary software, used internally.` }
     ],
     details:[
-      ["Platform","GET SDI Portal \u2014 JavaScript and PHP front-end; full-stack redevelopment in progress"],
+      ["Platform","GET SDI Portal"],
       ["Stack","PostGIS \u00b7 GeoServer \u00b7 GeoNetwork \u00b7 pycsw \u00b7 QGIS \u00b7 QFieldCloud \u00b7 GDAL"],
       ["Automation","Python \u00b7 PyQt6"],
-      ["Clients","Municipalities \u00b7 Regions (\u03a0\u03b5\u03c1\u03b9\u03c6\u03ad\u03c1\u03b5\u03b9\u03b5\u03c2) \u00b7 departments of ministries \u00b7 private sector"],
+      ["Clients","Municipalities \u00b7 Regions \u00b7 Departments of Ministries \u00b7 Private Sector"],
       ["Mobile mapping","Trimble MX7 \u00b7 Gexcel Heron \u00b7 Trimble Catalyst DA2 \u00b7 Vaisala RoadAI"],
       ["Also","Internal network support"]
     ] },
